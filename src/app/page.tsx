@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { AwaitingScan } from "@/components/dashboard/awaiting-scan";
 import { OperationsSummary } from "@/components/dashboard/operations-summary";
 import { OverdueFollowUps } from "@/components/dashboard/overdue-follow-ups";
@@ -9,15 +10,19 @@ import {
   getOverdueFollowUps,
   getPrescriptionsAwaitingScan,
   getTodayAppointments,
+  hasSampleData,
 } from "@/lib/data";
 
 export default async function DashboardPage() {
-  const [user, appointments, overdue, awaitingScan, summary] = await Promise.all([
+  // Luôn đọc database ở mỗi lần mở trang, không dựng sẵn lúc build.
+  await connection();
+  const [user, appointments, overdue, awaitingScan, summary, isSample] = await Promise.all([
     getCurrentUser(),
     getTodayAppointments(),
     getOverdueFollowUps(),
     getPrescriptionsAwaitingScan(),
     getMonthlySummary(),
+    hasSampleData(),
   ]);
 
   return (
@@ -28,10 +33,12 @@ export default async function DashboardPage() {
           <p className="mt-1 text-ink-muted">Chào {user.fullName}, đây là những việc cần làm hôm nay.</p>
         </div>
         {/* Nhắc rõ đang xem dữ liệu giả, tránh nhầm với dữ liệu bệnh nhân thật. */}
-        <p className="inline-flex items-center gap-1.5 rounded-full border border-attention/40 bg-attention-soft px-3 py-1 text-xs font-medium text-attention-ink">
-          <Icon name="alert" className="size-3.5" />
-          Đang hiển thị dữ liệu mẫu
-        </p>
+        {isSample && (
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-attention/40 bg-attention-soft px-3 py-1 text-xs font-medium text-attention-ink">
+            <Icon name="alert" className="size-3.5" />
+            Đang hiển thị dữ liệu mẫu
+          </p>
+        )}
       </div>
 
       {/* Bố cục lệch: cột chính cho việc cần xử lý, cột phụ cho tóm tắt và việc giấy tờ. */}

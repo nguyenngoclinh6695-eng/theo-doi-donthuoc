@@ -1,0 +1,174 @@
+// Lược đồ database phòng khám.
+// Quy ước: thời điểm lưu dạng timestamptz (UTC trong DB, hiển thị theo giờ Việt Nam);
+// ngày sinh lưu dạng date (không có giờ, tránh lệch ngày do múi giờ).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  DOCTOR
+  NURSE
+  RECEPTION
+  ADMIN
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  SCHEDULED // Đã hẹn, chưa đến
+  ARRIVED // Bệnh nhân đã đến
+  NO_SHOW // Vắng
+  CANCELLED // Huỷ hẹn
+}
+
+enum PrescriptionStatus {
+  DRAFT // Đang kê, còn sửa được
+  FINALIZED // Đã chốt, không sửa nữa; chờ in và ký tay
+  CANCELLED
+}
+
+/// Nhân viên dùng hệ thống. Mật khẩu/đăng nhập sẽ bổ sung ở bước phân quyền.
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  username  String   @unique
+  fullName  String
+  role      UserRole
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  appointmentsCreated Appointment[]  @relation("AppointmentCreatedBy")
+  visits              Visit[]
+  prescriptions       Prescription[]
+  reminderCalls       ReminderCall[]
+  auditLogs           AuditLog[]
+}
+
+model Patient {
+  id          String    @id @default(uuid()) @db.Uuid
+  /// Mã bệnh nhân nội bộ, hiển thị trên giấy tờ.
+  code        String    @unique
+  fullName    String
+  dateOfBirth DateTime? @db.Date
+  sex         Sex?
+  phone       String?
+  address     String?
+  /// Số định danh cá nhân / CCCD (trường có trên mẫu đơn thuốc).
+  idNumber    String?
+  /// Số thẻ BHYT, nếu có.
+  insuranceNo String?
+  /// Đánh dấu dữ liệu mẫu, để xoá sạch trước khi dùng thật và để script seed không đụng tới dữ liệu thật.
+  isSample    Boolean   @default(false)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+
+  appointments  Appointment[]
+  visits        Visit[]
+  prescriptions Prescription[]
+  reminderCalls ReminderCall[]
+
+  @@index([fullName])
+  @@index([phone])
+}
+
+model Appointment {
+  id          String            @id @default(uuid()) @db.Uuid
+  patientId   String            @db.Uuid
+  scheduledAt DateTime          @db.Timestamptz(3)
+  /// Lý do tái khám do nhân viên ghi (văn bản hành chính, không phải chẩn đoán).
+  reason      String
+  status      AppointmentStatus @default(SCHEDULED)
+  createdById String?           @db.Uuid
+  createdAt   DateTime          @default(now()) @db.Timestamptz(3)
+
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  createdBy     User?          @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+  visit         Visit?
+  reminderCalls ReminderCall[]
+
+  @@index([scheduledAt])
+  @@index([patientId, scheduledAt])
+}
+
+/// Một lượt khám.
+model Visit {
+  id            String   @id @default(uuid()) @db.Uuid
+  patientId     String   @db.Uuid
+  doctorId      String   @db.Uuid
+  /// Lượt khám phát sinh từ lịch hẹn nào (nếu có).
+  appointmentId String?  @unique @db.Uuid
+  visitedAt     DateTime @db.Timestamptz(3)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor        User           @relation(fields: [doctorId], references: [id])
+  appointment   Appointment?   @relation(fields: [appointmentId], references: [id])
+  prescriptions Prescription[]
+
+  @@index([visitedAt])
+  @@index([patientId, visitedAt])
+}
+
+/// Phần đầu đơn thuốc. Các dòng thuốc sẽ thêm ở bước kê đơn cùng Danh mục thuốc.
+model Prescription {
+  id             String             @id @default(uuid()) @db.Uuid
+  /// Số đơn nội bộ.
+  code           String             @unique
+  patientId      String             @db.Uuid
+  doctorId       String             @db.Uuid
+  visitId        String?            @db.Uuid
+  status         PrescriptionStatus @default(DRAFT)
+  finalizedAt    DateTime?          @db.Timestamptz(3)
+  /// Đường dẫn file scan đơn đã có chữ ký tay; null = chưa tải lên.
+  signedScanPath String?
+  scanUploadedAt DateTime?          @db.Timestamptz(3)
+  createdAt      DateTime           @default(now()) @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor  User    @relation(fields: [doctorId], references: [id])
+  visit   Visit?  @relation(fields: [visitId], references: [id])
+
+  @@index([status, scanUploadedAt])
+}
+
+/// Mỗi lần nhân viên gọi nhắc bệnh nhân trễ hẹn.
+model ReminderCall {
+  id            String   @id @default(uuid()) @db.Uuid
+  patientId     String   @db.Uuid
+  appointmentId String?  @db.Uuid
+  calledById    String   @db.Uuid
+  calledAt      DateTime @default(now()) @db.Timestamptz(3)
+  note          String?
+
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  calledBy    User         @relation(fields: [calledById], references: [id])
+
+  @@index([appointmentId, calledAt])
+}
+
+/// Nhật ký thao tác. Chỉ thêm, không sửa/xoá.
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @db.Uuid
+  /// Mã hành động, vd. "reminder_call.create".
+  action     String
+  entityType String
+  entityId   String?
+  details    Json?
+  at         DateTime @default(now()) @db.Timestamptz(3)
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([at])
+}

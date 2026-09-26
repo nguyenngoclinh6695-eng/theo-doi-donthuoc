@@ -17,7 +17,7 @@ export function OperationsSummary({ summary }: { summary: MonthlySummary }) {
           <dd className="mt-1">
             <span className="text-3xl font-semibold tabular-nums">{rate === null ? "—" : `${rate}%`}</span>
             <span className="mt-1 block text-sm text-white/80">
-              {summary.appointmentsKept}/{summary.appointmentsDue} lịch hẹn đã tới ngày có bệnh nhân đến đúng ngày
+              {summary.appointmentsKept}/{summary.appointmentsDue} lịch hẹn (từ đầu tháng đến hết hôm qua) có bệnh nhân đến đúng ngày
             </span>
             {rate !== null && (
               // Thanh tiến độ chỉ minh hoạ; con số và câu chữ bên trên mới là thông tin chính.

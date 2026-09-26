@@ -24,6 +24,10 @@ export interface Appointment {
 
 export interface OverdueFollowUp {
   id: string;
+  /** Lịch hẹn bị lỡ; lượt gọi nhắc được ghi gắn với lịch hẹn này. */
+  appointmentId: string;
+  /** Lần gọi nhắc gần nhất cho lịch hẹn này (ISO), null nếu chưa gọi. */
+  lastCalledAt: string | null;
   patientId: string;
   patientName: string;
   /** Ngày hẹn đã lỡ, dạng ISO "YYYY-MM-DD". */
@@ -46,7 +50,7 @@ export interface PrescriptionAwaitingScan {
 export interface MonthlySummary {
   /** Tháng đang thống kê, dạng "YYYY-MM". */
   month: string;
-  /** Số lịch hẹn đã tới ngày trong tháng (không tính lịch hẹn còn ở tương lai). */
+  /** Số lịch hẹn từ đầu tháng đến hết hôm qua (không tính lịch huỷ). */
   appointmentsDue: number;
   /** Trong số đó, số lượt bệnh nhân đến đúng ngày hẹn. */
   appointmentsKept: number;
