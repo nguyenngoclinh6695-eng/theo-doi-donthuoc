@@ -24,6 +24,17 @@ const actionLabels: Record<string, string> = {
   "patient.create": "Thêm hồ sơ bệnh nhân",
   "patient.update": "Sửa hồ sơ bệnh nhân",
   "patient.view": "Xem hồ sơ bệnh nhân",
+  "drug.create": "Thêm thuốc vào danh mục",
+  "drug.update": "Sửa thông tin thuốc",
+  "drug.activate": "Cho dùng lại thuốc",
+  "drug.deactivate": "Ngừng dùng thuốc",
+  "standard.source.create": "Thêm văn bản nguồn",
+  "standard.type.create": "Thêm loại chỉ số",
+  "standard.set.create": "Soạn bộ ngưỡng",
+  "standard.set.update": "Sửa bản nháp bộ ngưỡng",
+  "standard.set.approve": "Duyệt bộ ngưỡng",
+  "standard.set.retire": "Ngừng áp dụng bộ ngưỡng",
+  "standard.set.delete": "Xoá bản nháp bộ ngưỡng",
 };
 
 export default async function AuditLogPage() {

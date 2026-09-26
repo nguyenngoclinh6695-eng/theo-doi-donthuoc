@@ -4,6 +4,7 @@
 // Chạy: npm run db:seed   (xoá dữ liệu mẫu cũ rồi nạp lại)
 
 import type { AppointmentStatus, Patient } from "../src/generated/prisma/client";
+import { drugSearchText } from "../src/domain/drug";
 import { buildSearchText } from "../src/domain/patient";
 import { hashPassword, PASSWORD_MIN_LENGTH } from "../src/lib/auth/password";
 import { createPrismaClient } from "../src/lib/prisma-client";
@@ -41,10 +42,18 @@ async function main() {
     throw new Error(`Database có ${realPatients} bệnh nhân không phải dữ liệu mẫu – dừng seed để tránh mất dữ liệu.`);
   }
 
-  // Xoá dữ liệu mẫu cũ theo thứ tự phụ thuộc khoá ngoại.
+  // Thư viện chuẩn là dữ liệu chuyên môn do người dùng nhập (không có bản mẫu) – có dữ liệu thì dừng, không xoá.
+  const sources = await prisma.standardSource.count();
+  if (sources > 0) {
+    throw new Error(`Thư viện chuẩn đã có ${sources} văn bản nguồn – dừng seed để không làm mất ngưỡng đã nhập và duyệt.`);
+  }
+
+  // Xoá dữ liệu mẫu cũ theo thứ tự phụ thuộc khoá ngoại. Thuốc thật (isSample = false) được giữ nguyên.
   await prisma.$transaction([
     prisma.auditLog.deleteMany(),
     prisma.session.deleteMany(),
+    prisma.measurement.deleteMany(),
+    prisma.drug.deleteMany({ where: { isSample: true } }),
     prisma.reminderCall.deleteMany(),
     prisma.prescription.deleteMany(),
     prisma.visit.deleteMany(),
@@ -160,6 +169,51 @@ async function main() {
     const appt = await createAppointment(i, when, status);
     if (status === "ARRIVED") await createVisitFor(i, when, appt.id);
   }
+
+  // 5) Loại chỉ số: CHỈ tên và đơn vị, KHÔNG có ngưỡng nào (ngưỡng phải nhập ở Thư viện chuẩn kèm văn bản nguồn).
+  //    Dùng upsert theo mã để không xoá loại chỉ số người dùng đã tự thêm.
+  const measurementTypes: [code: string, name: string, unit: string, decimals: number][] = [
+    ["HA_TAM_THU", "Huyết áp tâm thu", "mmHg", 0],
+    ["HA_TAM_TRUONG", "Huyết áp tâm trương", "mmHg", 0],
+    ["MACH", "Mạch", "lần/phút", 0],
+    ["NHIET_DO", "Nhiệt độ", "°C", 1],
+    ["SPO2", "SpO2", "%", 0],
+    ["DUONG_HUYET_DOI", "Đường huyết lúc đói", "mmol/L", 1],
+    ["HBA1C", "HbA1c", "%", 1],
+    ["CAN_NANG", "Cân nặng", "kg", 1],
+    ["CHIEU_CAO", "Chiều cao", "cm", 0],
+  ];
+  for (const [i, [code, name, unit, decimals]] of measurementTypes.entries()) {
+    await prisma.measurementType.upsert({ where: { code }, update: {}, create: { code, name, unit, decimals, sortOrder: i + 1 } });
+  }
+
+  // 6) Thuốc mẫu cho danh mục (đánh dấu isSample, tên thương mại ghi rõ là mẫu). Chỉ để thử chức năng chọn thuốc.
+  const sampleDrugs: [ingredient: string, strength: string, form: string, unit: string][] = [
+    ["Paracetamol", "500 mg", "Viên nén", "viên"],
+    ["Amoxicillin", "500 mg", "Viên nang", "viên"],
+    ["Metformin", "500 mg", "Viên nén", "viên"],
+    ["Amlodipin", "5 mg", "Viên nén", "viên"],
+    ["Omeprazol", "20 mg", "Viên nang", "viên"],
+    ["Natri clorid", "0,9% – 10 ml", "Dung dịch nhỏ mắt", "lọ"],
+  ];
+  for (const [activeIngredient, strength, dosageForm, unit] of sampleDrugs) {
+    const brandName = "Thuốc mẫu";
+    await prisma.drug.create({
+      data: { activeIngredient, strength, dosageForm, unit, brandName, isSample: true, searchText: drugSearchText({ activeIngredient, strength, brandName }) },
+    });
+  }
+  await prisma.drug.create({
+    data: {
+      activeIngredient: "Thuốc kiểm soát đặc biệt (mẫu)",
+      strength: "10 mg",
+      dosageForm: "Viên nén",
+      unit: "viên",
+      control: "PSYCHOTROPIC",
+      isSample: true,
+      note: "Mục mẫu để thử việc chặn kê thuốc cần mẫu đơn riêng.",
+      searchText: drugSearchText({ activeIngredient: "Thuốc kiểm soát đặc biệt (mẫu)", strength: "10 mg", brandName: null }),
+    },
+  });
 
   // 4) Đơn thuốc: vài đơn đã chốt có scan, 2 đơn đã chốt nhưng chưa có scan.
   const prescriptionPlan = [

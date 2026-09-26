@@ -19,7 +19,8 @@ export const PERMISSIONS = [
   "prescriptions.write", // Kê và chốt đơn – chỉ bác sĩ
   "prescriptions.uploadScan",
   "standards.view",
-  "standards.manage",
+  "standards.manage", // Soạn bộ ngưỡng (bản nháp), thêm văn bản nguồn, loại chỉ số
+  "standards.approve", // Duyệt để bộ ngưỡng có hiệu lực / ngừng áp dụng – chỉ bác sĩ, và không tự duyệt bản mình soạn
   "drugs.view",
   "drugs.manage",
   "users.manage",
@@ -42,6 +43,8 @@ const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     "prescriptions.write",
     "prescriptions.uploadScan",
     "standards.view",
+    "standards.manage",
+    "standards.approve",
     "drugs.view",
   ],
   dieu_duong: [

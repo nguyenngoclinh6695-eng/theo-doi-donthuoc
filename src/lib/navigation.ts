@@ -23,8 +23,8 @@ export const navItems: NavItem[] = [
   { slug: "benh-nhan", label: "Bệnh nhân", icon: "users", permission: "patients.view", placeholder: false, description: "Hồ sơ bệnh nhân, lịch sử khám và theo dõi chỉ số." },
   { slug: "kham-benh", label: "Khám bệnh", icon: "stethoscope", permission: "visits.view", placeholder: true, description: "Ghi nhận lượt khám và chỉ số đo được." },
   { slug: "don-thuoc", label: "Đơn thuốc", icon: "prescription", permission: "prescriptions.view", placeholder: true, description: "Kê đơn theo mẫu Phụ lục I Thông tư 26/2025/TT-BYT, chốt đơn, in và lưu bản scan có chữ ký." },
-  { slug: "thu-vien-chuan", label: "Thư viện chuẩn", icon: "book", permission: "standards.view", placeholder: true, description: "Ngưỡng và quy tắc lấy từ văn bản chuyên môn, có nguồn và phiên bản." },
-  { slug: "danh-muc-thuoc", label: "Danh mục thuốc", icon: "pill", permission: "drugs.view", placeholder: true, description: "Danh mục thuốc dùng tại phòng khám." },
+  { slug: "thu-vien-chuan", label: "Thư viện chuẩn", icon: "book", permission: "standards.view", placeholder: false, description: "Ngưỡng và quy tắc lấy từ văn bản chuyên môn, có nguồn và phiên bản." },
+  { slug: "danh-muc-thuoc", label: "Danh mục thuốc", icon: "pill", permission: "drugs.view", placeholder: false, description: "Danh mục thuốc dùng tại phòng khám." },
   { slug: "nguoi-dung", label: "Người dùng", icon: "shield", permission: "users.manage", placeholder: false, description: "Tài khoản nhân viên và vai trò." },
   { slug: "nhat-ky", label: "Nhật ký", icon: "log", permission: "audit.view", placeholder: false, description: "Nhật ký thao tác (audit) của người dùng." },
 ];

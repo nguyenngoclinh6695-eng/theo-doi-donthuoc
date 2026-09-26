@@ -54,12 +54,16 @@ model User {
   lastLoginAt        DateTime? @db.Timestamptz(3)
   createdAt          DateTime  @default(now()) @db.Timestamptz(3)
 
-  sessions            Session[]
-  appointmentsCreated Appointment[]  @relation("AppointmentCreatedBy")
-  visits              Visit[]
-  prescriptions       Prescription[]
-  reminderCalls       ReminderCall[]
-  auditLogs           AuditLog[]
+  sessions             Session[]
+  standardSources      StandardSource[] @relation("StandardSourceCreatedBy")
+  standardSetsCreated  StandardSet[]    @relation("StandardSetCreatedBy")
+  standardSetsApproved StandardSet[]    @relation("StandardSetApprovedBy")
+  measurementsRecorded Measurement[]    @relation("MeasurementRecordedBy")
+  appointmentsCreated  Appointment[]    @relation("AppointmentCreatedBy")
+  visits               Visit[]
+  prescriptions        Prescription[]
+  reminderCalls        ReminderCall[]
+  auditLogs            AuditLog[]
 }
 
 /// Phiên đăng nhập. Trình duyệt chỉ giữ token ngẫu nhiên trong cookie; DB chỉ lưu bản băm SHA-256 của token,
@@ -108,6 +112,7 @@ model Patient {
   visits        Visit[]
   prescriptions Prescription[]
   reminderCalls ReminderCall[]
+  measurements  Measurement[]
 
   @@index([fullName])
   @@index([phone])
@@ -147,6 +152,7 @@ model Visit {
   doctor        User           @relation(fields: [doctorId], references: [id])
   appointment   Appointment?   @relation(fields: [appointmentId], references: [id])
   prescriptions Prescription[]
+  measurements  Measurement[]
 
   @@index([visitedAt])
   @@index([patientId, visitedAt])
@@ -205,4 +211,157 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([at])
+}
+
+// ───────────────────────── Danh mục thuốc ─────────────────────────
+
+/// Nhóm thuốc phải kiểm soát đặc biệt (dùng mẫu đơn riêng). Hệ thống hiện chỉ hỗ trợ đơn thông thường,
+/// nên thuốc khác NORMAL sẽ bị chặn khi kê (fail-closed).
+enum DrugControl {
+  NORMAL
+  NARCOTIC // Gây nghiện
+  PSYCHOTROPIC // Hướng thần
+  PRECURSOR // Tiền chất
+}
+
+model Drug {
+  id               String      @id @default(uuid()) @db.Uuid
+  /// Tên hoạt chất (tên chung).
+  activeIngredient String
+  /// Hàm lượng / nồng độ, vd. "500 mg".
+  strength         String
+  /// Dạng bào chế, vd. "Viên nén".
+  dosageForm       String
+  /// Đơn vị tính khi kê số lượng, vd. "viên".
+  unit             String
+  brandName        String?
+  route            String?
+  control          DrugControl @default(NORMAL)
+  isActive         Boolean     @default(true)
+  note             String?
+  /// Chuỗi tìm kiếm bỏ dấu (hoạt chất + tên thương mại).
+  searchText       String      @default("")
+  isSample         Boolean     @default(false)
+  createdAt        DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@index([activeIngredient])
+}
+
+// ───────────────────────── Thư viện chuẩn ─────────────────────────
+// Toàn bộ ngưỡng phân loại chỉ số nằm ở đây, do người có thẩm quyền nhập kèm nguồn văn bản.
+// Code KHÔNG chứa ngưỡng nào.
+
+/// Loại chỉ số đo được (huyết áp tâm thu, đường huyết...). Chỉ định nghĩa tên và đơn vị, không có ngưỡng.
+model MeasurementType {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  name      String
+  unit      String
+  /// Số chữ số thập phân khi nhập/hiển thị.
+  decimals  Int      @default(0)
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  standardSets StandardSet[]
+  measurements Measurement[]
+}
+
+/// Văn bản chuyên môn làm căn cứ (quyết định, hướng dẫn, phác đồ).
+model StandardSource {
+  id             String    @id @default(uuid()) @db.Uuid
+  title          String
+  documentNumber String?
+  issuer         String?
+  issuedDate     DateTime? @db.Date
+  url            String?
+  note           String?
+  createdById    String    @db.Uuid
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  createdBy User          @relation("StandardSourceCreatedBy", fields: [createdById], references: [id])
+  sets      StandardSet[]
+}
+
+enum StandardSetStatus {
+  DRAFT // Đang soạn, chưa dùng để phân loại
+  ACTIVE // Đã duyệt, đang áp dụng
+  RETIRED // Ngừng áp dụng (giữ lại để tra cứu lịch sử)
+}
+
+/// Một phiên bản bộ ngưỡng cho một loại chỉ số, áp dụng cho một nhóm bệnh nhân.
+model StandardSet {
+  id                String            @id @default(uuid()) @db.Uuid
+  measurementTypeId String            @db.Uuid
+  sourceId          String            @db.Uuid
+  version           String
+  /// Mục/trang/bảng trong văn bản nguồn, để người khác đối chiếu.
+  sourceSection     String?
+  effectiveFrom     DateTime          @db.Date
+  /// Phạm vi áp dụng; null = mọi giới / mọi tuổi. Tuổi: từ ageMinYears (gồm) đến dưới ageMaxYears.
+  sexScope          Sex?
+  ageMinYears       Int?
+  ageMaxYears       Int?
+  status            StandardSetStatus @default(DRAFT)
+  note              String?
+  createdById       String            @db.Uuid
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  approvedById      String?           @db.Uuid
+  approvedAt        DateTime?         @db.Timestamptz(3)
+  retiredAt         DateTime?         @db.Timestamptz(3)
+
+  measurementType MeasurementType @relation(fields: [measurementTypeId], references: [id])
+  source          StandardSource  @relation(fields: [sourceId], references: [id])
+  createdBy       User            @relation("StandardSetCreatedBy", fields: [createdById], references: [id])
+  approvedBy      User?           @relation("StandardSetApprovedBy", fields: [approvedById], references: [id])
+  bands           StandardBand[]
+  measurements    Measurement[]
+
+  @@index([measurementTypeId, status])
+}
+
+enum BandTone {
+  NORMAL
+  ATTENTION
+  ALERT
+}
+
+/// Một khoảng giá trị trong bộ ngưỡng. Nhãn ghi đúng như văn bản nguồn.
+model StandardBand {
+  id             String   @id @default(uuid()) @db.Uuid
+  setId          String   @db.Uuid
+  label          String
+  lowerBound     Decimal? @db.Decimal(12, 3)
+  lowerInclusive Boolean  @default(true)
+  upperBound     Decimal? @db.Decimal(12, 3)
+  upperInclusive Boolean  @default(false)
+  tone           BandTone
+  sortOrder      Int      @default(0)
+
+  set StandardSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────── Chỉ số đo trong lượt khám ─────────────────────────
+
+model Measurement {
+  id                  String   @id @default(uuid()) @db.Uuid
+  visitId             String   @db.Uuid
+  patientId           String   @db.Uuid
+  measurementTypeId   String   @db.Uuid
+  value               Decimal  @db.Decimal(12, 3)
+  measuredAt          DateTime @db.Timestamptz(3)
+  recordedById        String   @db.Uuid
+  /// Kết quả phân loại lưu kèm lúc ghi (nhãn + bộ ngưỡng đã dùng), để sau này ngưỡng đổi vẫn biết lúc đó phân loại theo căn cứ nào.
+  classificationLabel String?
+  standardSetId       String?  @db.Uuid
+  createdAt           DateTime @default(now()) @db.Timestamptz(3)
+
+  visit           Visit           @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  patient         Patient         @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  measurementType MeasurementType @relation(fields: [measurementTypeId], references: [id])
+  recordedBy      User            @relation("MeasurementRecordedBy", fields: [recordedById], references: [id])
+  standardSet     StandardSet?    @relation(fields: [standardSetId], references: [id])
+
+  @@index([patientId, measurementTypeId, measuredAt])
 }
