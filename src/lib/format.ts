@@ -43,3 +43,11 @@ export const roleLabels: Record<UserRole, string> = {
   tiep_don: "Tiếp đón",
   quan_tri: "Quản trị",
 };
+
+/** Ngày giờ đầy đủ có năm ("26/09/2026 08:30") – dùng cho lịch sử có thể trải qua nhiều năm. */
+export function formatDateTimeFull(iso: string): string {
+  const d = new Date(iso);
+  const date = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: clinicConfig.timeZone }).format(d);
+  const time = new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: clinicConfig.timeZone }).format(d);
+  return `${date} ${time}`;
+}

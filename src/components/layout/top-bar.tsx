@@ -2,6 +2,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { logout } from "@/app/actions/auth";
 import { Icon } from "@/components/icons";
+import { PatientQuickSearch } from "@/components/patients/patient-quick-search";
+import { can } from "@/domain/permissions";
 import type { SessionUser } from "@/lib/auth/dal";
 import { clinicConfig } from "@/lib/clinic-config";
 import { formatLongDate, roleLabels } from "@/lib/format";
@@ -18,23 +20,8 @@ export async function TopBar({ user }: { user: SessionUser | null }) {
         <p className="text-xs capitalize text-ink-muted">{today}</p>
       </div>
 
-      {/* Ô tìm bệnh nhân – bước này chỉ dựng giao diện, chưa tìm thật.
-          Cố ý không dùng <form> gửi đi: từ khoá (tên, SĐT) không được nằm trên URL. */}
-      <div role="search" className="ml-auto w-full max-w-sm">
-        <label htmlFor="patient-search" className="sr-only">
-          Tìm bệnh nhân
-        </label>
-        <div className="relative">
-          <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" />
-          <input
-            id="patient-search"
-            name="q"
-            type="search"
-            placeholder="Tìm bệnh nhân theo tên, mã, SĐT…"
-            className="w-full rounded-lg border border-line bg-page py-2 pl-9 pr-3 text-sm placeholder:text-ink-muted focus:border-primary focus:bg-surface"
-          />
-        </div>
-      </div>
+      {/* Chỉ vai trò được xem hồ sơ mới có ô tìm bệnh nhân. */}
+      {user && can(user.role, "patients.view") ? <PatientQuickSearch /> : <div className="ml-auto" />}
 
       {user && (
         <div className="flex items-center gap-1">

@@ -81,22 +81,28 @@ model Session {
 }
 
 model Patient {
-  id          String    @id @default(uuid()) @db.Uuid
-  /// Mã bệnh nhân nội bộ, hiển thị trên giấy tờ.
-  code        String    @unique
-  fullName    String
-  dateOfBirth DateTime? @db.Date
-  sex         Sex?
-  phone       String?
-  address     String?
+  id           String    @id @default(uuid()) @db.Uuid
+  /// Mã bệnh nhân nội bộ, hiển thị trên giấy tờ. Cấp tự động từ sequence của PostgreSQL (không trùng kể cả khi hai máy tạo cùng lúc).
+  code         String    @unique @default(dbgenerated("('BN-' || lpad((nextval('patient_code_seq'::regclass))::text, 6, '0'))"))
+  fullName     String
+  dateOfBirth  DateTime? @db.Date
+  sex          Sex?
+  phone        String?
+  address      String?
   /// Số định danh cá nhân / CCCD (trường có trên mẫu đơn thuốc).
-  idNumber    String?
+  idNumber     String?
   /// Số thẻ BHYT, nếu có.
-  insuranceNo String?
+  insuranceNo  String?
+  /// Họ tên cha/mẹ hoặc người giám hộ – dùng khi kê đơn cho trẻ nhỏ.
+  guardianName String?
+  /// Ghi chú dị ứng do nhân viên ghi nhận (văn bản tự do, hệ thống không tự suy luận).
+  allergyNote  String?
+  /// Chuỗi tìm kiếm: họ tên bỏ dấu + mã + số điện thoại + CCCD, chữ thường. Ứng dụng tự cập nhật khi lưu hồ sơ.
+  searchText   String    @default("")
   /// Đánh dấu dữ liệu mẫu, để xoá sạch trước khi dùng thật và để script seed không đụng tới dữ liệu thật.
-  isSample    Boolean   @default(false)
-  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  isSample     Boolean   @default(false)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
 
   appointments  Appointment[]
   visits        Visit[]
@@ -105,6 +111,7 @@ model Patient {
 
   @@index([fullName])
   @@index([phone])
+  @@index([updatedAt])
 }
 
 model Appointment {

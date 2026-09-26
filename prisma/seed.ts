@@ -4,6 +4,7 @@
 // Chạy: npm run db:seed   (xoá dữ liệu mẫu cũ rồi nạp lại)
 
 import type { AppointmentStatus, Patient } from "../src/generated/prisma/client";
+import { buildSearchText } from "../src/domain/patient";
 import { hashPassword, PASSWORD_MIN_LENGTH } from "../src/lib/auth/password";
 import { createPrismaClient } from "../src/lib/prisma-client";
 import { addDays, clinicPeriods, daysBetween, startOfClinicDay } from "../src/lib/time";
@@ -51,6 +52,8 @@ async function main() {
     prisma.patient.deleteMany(),
     prisma.user.deleteMany(),
   ]);
+  // Chỉ có dữ liệu mẫu nên đặt lại bộ đếm mã bệnh nhân: hồ sơ thật đầu tiên sẽ là BN-000001.
+  await prisma.$executeRaw`ALTER SEQUENCE "patient_code_seq" RESTART WITH 1`;
 
   // Tài khoản mẫu dùng chung một mật khẩu lấy từ .env (SEED_USER_PASSWORD), không ghi cứng trong code.
   // Không bắt đổi mật khẩu để tiện chuyển qua lại giữa các vai trò khi thử nghiệm.
@@ -76,15 +79,24 @@ async function main() {
   for (let i = 0; i < 30; i++) {
     const sex = i % 2 === 0 ? "MALE" : "FEMALE";
     const name = `${lastNames[i % lastNames.length]} ${middle[i % 2]} ${letters[i % letters.length]}${i >= letters.length ? 2 : ""} (mẫu)`;
+    const code = `BN-MAU-${String(i + 1).padStart(4, "0")}`;
+    const phone = `0900000${String(100 + i * 7).padStart(3, "0")}`;
+    // Bệnh nhân số 10 là trẻ nhỏ (3 tuổi) để thử hiển thị tuổi theo tháng và người giám hộ.
+    const isChild = i === 9;
     patients.push(
       await prisma.patient.create({
         data: {
-          code: `BN-MAU-${String(i + 1).padStart(4, "0")}`,
+          code,
           fullName: name,
           sex,
-          dateOfBirth: new Date(`${1950 + ((i * 7) % 45)}-${String((i % 12) + 1).padStart(2, "0")}-15`),
-          phone: `0900000${String(100 + i * 7).padStart(3, "0")}`,
+          dateOfBirth: isChild
+            ? new Date(`${addDays(clinicPeriods().todayKey, -3 * 365 - 40)}T00:00:00Z`)
+            : new Date(`${1950 + ((i * 7) % 45)}-${String((i % 12) + 1).padStart(2, "0")}-15`),
+          phone,
           address: "Địa chỉ mẫu, không có thật",
+          guardianName: isChild ? "Người giám hộ mẫu" : null,
+          allergyNote: i === 0 ? "Ghi chú dị ứng mẫu – dữ liệu thử nghiệm, không phải thông tin thật." : null,
+          searchText: buildSearchText({ fullName: name, code, phone }),
           isSample: true,
         },
       }),

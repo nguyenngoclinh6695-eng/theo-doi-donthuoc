@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { OverdueFollowUp } from "@/domain/types";
 import { recordReminderCall } from "@/app/actions/reminder-calls";
 import { Icon } from "@/components/icons";
@@ -27,7 +28,9 @@ export function OverdueFollowUps({ items }: { items: OverdueFollowUp[] }) {
                 <p className="text-xs text-ink-muted">ngày trễ</p>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium">{item.patientName}</p>
+                <Link href={`/benh-nhan/${item.patientId}`} className="font-medium underline-offset-4 hover:text-primary-ink hover:underline">
+                  {item.patientName}
+                </Link>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-sm text-ink-muted">
                   <span>Hẹn ngày {formatDate(item.missedDate)}</span>
                   <span className="inline-flex items-center gap-1 tabular-nums">

@@ -21,6 +21,9 @@ const actionLabels: Record<string, string> = {
   "user.deactivate": "Khoá tài khoản",
   "user.role.change": "Đổi vai trò",
   "reminder_call.create": "Ghi nhận gọi nhắc trễ hẹn",
+  "patient.create": "Thêm hồ sơ bệnh nhân",
+  "patient.update": "Sửa hồ sơ bệnh nhân",
+  "patient.view": "Xem hồ sơ bệnh nhân",
 };
 
 export default async function AuditLogPage() {

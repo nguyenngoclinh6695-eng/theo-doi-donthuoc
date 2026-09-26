@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Appointment, AppointmentStatus } from "@/domain/types";
 import type { IconName } from "@/components/icons";
 import { SectionCard } from "@/components/ui/section-card";
@@ -41,7 +42,11 @@ export function TodayAppointments({ appointments }: { appointments: Appointment[
                 return (
                   <tr key={a.id} className="hover:bg-page">
                     <td className="px-5 py-3.5 font-semibold tabular-nums text-primary-strong">{a.time}</td>
-                    <td className="whitespace-nowrap px-3 py-3.5 font-medium">{a.patientName}</td>
+                    <td className="whitespace-nowrap px-3 py-3.5 font-medium">
+                      <Link href={`/benh-nhan/${a.patientId}`} className="text-ink underline-offset-4 hover:text-primary-ink hover:underline">
+                        {a.patientName}
+                      </Link>
+                    </td>
                     <td className="min-w-48 px-3 py-3.5 text-ink-muted">{a.reason}</td>
                     <td className="px-5 py-3.5">
                       <StatusBadge {...s} />
