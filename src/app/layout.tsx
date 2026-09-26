@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
-import { AppShell } from "@/components/layout/app-shell";
-import { TopBar } from "@/components/layout/top-bar";
 import { clinicConfig } from "@/lib/clinic-config";
 import "./globals.css";
 
@@ -23,11 +21,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={`${beVietnam.variable} antialiased`}>
-      <body className="font-sans">
-        <AppShell clinicName={clinicConfig.name} topBar={<TopBar />}>
-          {children}
-        </AppShell>
-      </body>
+      <body className="font-sans">{children}</body>
     </html>
   );
 }

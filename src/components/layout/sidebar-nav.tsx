@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icons";
-import { hrefOf, navItems } from "@/lib/navigation";
+import { hrefOf, type NavLink } from "@/lib/navigation";
 
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+export function SidebarNav({ items, onNavigate }: { items: NavLink[]; onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Điều hướng chính">
       <ul className="space-y-1">
-        {navItems.map((item) => {
+        {items.map((item) => {
           const href = hrefOf(item);
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (

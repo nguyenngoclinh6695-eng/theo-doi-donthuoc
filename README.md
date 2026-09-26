@@ -26,6 +26,16 @@ Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì 
 
 Ứng dụng kết nối bằng tài khoản `phongkham_app` (chủ database `phongkham`), không dùng tài khoản quản trị `postgres`.
 
+## Đăng nhập và phân quyền
+
+- Tài khoản mẫu (sau `npm run db:seed`): `bs.mau1`, `bs.mau2` (bác sĩ), `dieuduong.mau`, `tiepdon.mau`, `quantri.mau`.
+  Mật khẩu chung là giá trị `SEED_USER_PASSWORD` trong file `.env`.
+- Quyền của từng vai trò nằm trong một file duy nhất: `src/domain/permissions.ts`.
+- Quản trị tạo tài khoản ở trang **Người dùng**; hệ thống sinh mật khẩu tạm và bắt đổi ở lần đăng nhập đầu.
+- Tự đăng xuất sau 60 phút không thao tác, tối đa 12 giờ/phiên; nhập sai 5 lần thì khoá 15 phút
+  (chỉnh trong `src/lib/auth/session.ts` và `src/app/actions/auth.ts`).
+- Chạy production cần HTTPS (cookie đăng nhập có cờ Secure).
+
 ## Sửa nhanh
 
 | Muốn đổi | Sửa file |
@@ -35,5 +45,6 @@ Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì 
 | Mục menu | `src/lib/navigation.ts` |
 | Bảng dữ liệu | `prisma/schema.prisma`, rồi chạy `npm run db:migrate` |
 | Dữ liệu mẫu | `prisma/seed.ts`, rồi chạy `npm run db:seed` |
+| Quyền theo vai trò | `src/domain/permissions.ts` |
 
 Toàn bộ dữ liệu hiện tại là **dữ liệu mẫu** (cột `isSample = true`), không phải thông tin người thật.

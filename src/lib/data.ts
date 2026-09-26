@@ -1,44 +1,23 @@
 // Lớp truy cập dữ liệu. Giao diện chỉ gọi các hàm ở đây và chỉ nhận kiểu trong src/domain/types.ts,
 // không nhận thẳng object của Prisma – để đổi cách lưu trữ sau này không phải sửa giao diện.
+// Kiểm tra quyền KHÔNG nằm ở đây mà ở trang/server action gọi tới (qua src/lib/auth/dal.ts).
 
 import type {
   Appointment,
   AppointmentStatus,
-  CurrentUser,
   MonthlySummary,
   OverdueFollowUp,
   PrescriptionAwaitingScan,
-  UserRole,
 } from "@/domain/types";
-import type { AppointmentStatus as DbAppointmentStatus, UserRole as DbUserRole } from "@/generated/prisma/enums";
+import type { AppointmentStatus as DbAppointmentStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { clinicDateKey, clinicPeriods, clinicTime, daysBetween } from "@/lib/time";
-
-const roleMap: Record<DbUserRole, UserRole> = {
-  DOCTOR: "bac_si",
-  NURSE: "dieu_duong",
-  RECEPTION: "tiep_don",
-  ADMIN: "quan_tri",
-};
 
 const appointmentStatusMap: Record<Exclude<DbAppointmentStatus, "CANCELLED">, AppointmentStatus> = {
   SCHEDULED: "cho",
   ARRIVED: "da_den",
   NO_SHOW: "vang",
 };
-
-/**
- * TẠM THỜI: chưa có đăng nhập, nên coi bác sĩ đầu tiên đang hoạt động là người dùng hiện tại.
- * Bước phân quyền sẽ thay bằng người dùng lấy từ phiên đăng nhập.
- */
-export async function getCurrentUser(): Promise<CurrentUser> {
-  const user = await prisma.user.findFirst({
-    where: { isActive: true, role: "DOCTOR" },
-    orderBy: { createdAt: "asc" },
-  });
-  if (!user) throw new Error("Chưa có người dùng nào trong database. Chạy: npm run db:seed");
-  return { id: user.id, fullName: user.fullName, role: roleMap[user.role] };
-}
 
 export async function hasSampleData(): Promise<boolean> {
   return (await prisma.patient.count({ where: { isSample: true } })) > 0;

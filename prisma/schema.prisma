@@ -37,20 +37,47 @@ enum PrescriptionStatus {
   CANCELLED
 }
 
-/// Nhân viên dùng hệ thống. Mật khẩu/đăng nhập sẽ bổ sung ở bước phân quyền.
+/// Nhân viên dùng hệ thống.
 model User {
-  id        String   @id @default(uuid()) @db.Uuid
-  username  String   @unique
-  fullName  String
-  role      UserRole
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  id                 String    @id @default(uuid()) @db.Uuid
+  username           String    @unique
+  fullName           String
+  role               UserRole
+  isActive           Boolean   @default(true)
+  /// Mật khẩu đã băm bằng scrypt (không bao giờ lưu mật khẩu gốc). Null = chưa đặt, không đăng nhập được.
+  passwordHash       String?
+  /// Bắt đổi mật khẩu ở lần đăng nhập tới (tài khoản mới, hoặc vừa được quản trị đặt lại mật khẩu).
+  mustChangePassword Boolean   @default(true)
+  /// Đếm số lần nhập sai liên tiếp để tạm khoá, chống dò mật khẩu.
+  failedLoginCount   Int       @default(0)
+  lockedUntil        DateTime? @db.Timestamptz(3)
+  lastLoginAt        DateTime? @db.Timestamptz(3)
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
 
+  sessions            Session[]
   appointmentsCreated Appointment[]  @relation("AppointmentCreatedBy")
   visits              Visit[]
   prescriptions       Prescription[]
   reminderCalls       ReminderCall[]
   auditLogs           AuditLog[]
+}
+
+/// Phiên đăng nhập. Trình duyệt chỉ giữ token ngẫu nhiên trong cookie; DB chỉ lưu bản băm SHA-256 của token,
+/// nên dù lộ bảng này cũng không dùng được để đăng nhập.
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  tokenHash  String   @unique
+  userId     String   @db.Uuid
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  /// Hạn tuyệt đối của phiên.
+  expiresAt  DateTime @db.Timestamptz(3)
+  /// Lần hoạt động gần nhất, dùng để tự đăng xuất khi bỏ máy lâu.
+  lastSeenAt DateTime @db.Timestamptz(3)
+  userAgent  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Patient {

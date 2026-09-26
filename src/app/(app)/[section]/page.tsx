@@ -2,26 +2,31 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/icons";
+import { requirePermission } from "@/lib/auth/dal";
 import { navItems } from "@/lib/navigation";
 
 // Tạm thời mọi mục chưa làm dùng chung một trang "Đang xây dựng".
-// Khi làm mục nào, tạo thư mục riêng (vd. src/app/benh-nhan/) – route cụ thể sẽ được ưu tiên hơn route động này.
+// Khi làm mục nào, tạo thư mục riêng (vd. src/app/(app)/benh-nhan/) và đặt placeholder: false trong navigation.ts.
 export const dynamicParams = false;
 
+const placeholders = navItems.filter((i) => i.slug && i.placeholder);
+
 export function generateStaticParams() {
-  return navItems.filter((i) => i.slug).map((i) => ({ section: i.slug }));
+  return placeholders.map((i) => ({ section: i.slug }));
 }
 
 export async function generateMetadata(props: PageProps<"/[section]">): Promise<Metadata> {
   const { section } = await props.params;
-  const item = navItems.find((i) => i.slug === section);
+  const item = placeholders.find((i) => i.slug === section);
   return { title: item ? `${item.label} – Đang xây dựng` : undefined };
 }
 
 export default async function UnderConstructionPage(props: PageProps<"/[section]">) {
   const { section } = await props.params;
-  const item = navItems.find((i) => i.slug === section);
+  const item = placeholders.find((i) => i.slug === section);
   if (!item) notFound();
+  // Trang chưa có nội dung nhưng vẫn kiểm tra quyền, để khi thêm nội dung không bị quên.
+  await requirePermission(item.permission);
 
   return (
     <div className="mx-auto max-w-xl py-12 text-center">

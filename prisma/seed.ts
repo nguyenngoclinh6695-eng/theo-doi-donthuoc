@@ -4,6 +4,7 @@
 // Chạy: npm run db:seed   (xoá dữ liệu mẫu cũ rồi nạp lại)
 
 import type { AppointmentStatus, Patient } from "../src/generated/prisma/client";
+import { hashPassword, PASSWORD_MIN_LENGTH } from "../src/lib/auth/password";
 import { createPrismaClient } from "../src/lib/prisma-client";
 import { addDays, clinicPeriods, daysBetween, startOfClinicDay } from "../src/lib/time";
 
@@ -42,6 +43,7 @@ async function main() {
   // Xoá dữ liệu mẫu cũ theo thứ tự phụ thuộc khoá ngoại.
   await prisma.$transaction([
     prisma.auditLog.deleteMany(),
+    prisma.session.deleteMany(),
     prisma.reminderCall.deleteMany(),
     prisma.prescription.deleteMany(),
     prisma.visit.deleteMany(),
@@ -50,10 +52,22 @@ async function main() {
     prisma.user.deleteMany(),
   ]);
 
+  // Tài khoản mẫu dùng chung một mật khẩu lấy từ .env (SEED_USER_PASSWORD), không ghi cứng trong code.
+  // Không bắt đổi mật khẩu để tiện chuyển qua lại giữa các vai trò khi thử nghiệm.
+  const seedPassword = process.env.SEED_USER_PASSWORD;
+  if (!seedPassword || seedPassword.length < PASSWORD_MIN_LENGTH) {
+    throw new Error(`Đặt SEED_USER_PASSWORD (ít nhất ${PASSWORD_MIN_LENGTH} ký tự) trong file .env trước khi seed.`);
+  }
+  const passwordHash = await hashPassword(seedPassword);
+  const account = (username: string, fullName: string, role: "DOCTOR" | "NURSE" | "RECEPTION" | "ADMIN") =>
+    prisma.user.create({ data: { username, fullName, role, passwordHash, mustChangePassword: false } });
+
   const [doctor1, doctor2, reception] = await Promise.all([
-    prisma.user.create({ data: { username: "bs.mau1", fullName: "BS. Mẫu Văn Một", role: "DOCTOR" } }),
-    prisma.user.create({ data: { username: "bs.mau2", fullName: "BS. Mẫu Thị Hai", role: "DOCTOR" } }),
-    prisma.user.create({ data: { username: "tiepdon.mau", fullName: "Mẫu Thị Tiếp Đón", role: "RECEPTION" } }),
+    account("bs.mau1", "BS. Mẫu Văn Một", "DOCTOR"),
+    account("bs.mau2", "BS. Mẫu Thị Hai", "DOCTOR"),
+    account("tiepdon.mau", "Mẫu Thị Tiếp Đón", "RECEPTION"),
+    account("dieuduong.mau", "ĐD. Mẫu Thị Ba", "NURSE"),
+    account("quantri.mau", "Mẫu Văn Quản Trị", "ADMIN"),
   ]);
   const doctors = [doctor1, doctor2];
 
@@ -165,6 +179,7 @@ async function main() {
     visits: await prisma.visit.count(),
     prescriptions: await prisma.prescription.count(),
   };
+  console.log("Tài khoản mẫu: bs.mau1, bs.mau2, dieuduong.mau, tiepdon.mau, quantri.mau – mật khẩu là SEED_USER_PASSWORD trong .env");
   console.log(`Đã nạp dữ liệu mẫu (ngày ${today}, ${daysBetween(`${p.monthKey}-01`, today) + 1} ngày đầu tháng):`, counts);
 }
 

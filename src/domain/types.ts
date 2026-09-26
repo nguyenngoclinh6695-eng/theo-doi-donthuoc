@@ -5,6 +5,7 @@ export type UserRole = "bac_si" | "dieu_duong" | "tiep_don" | "quan_tri";
 
 export interface CurrentUser {
   id: string;
+  username: string;
   fullName: string;
   role: UserRole;
 }

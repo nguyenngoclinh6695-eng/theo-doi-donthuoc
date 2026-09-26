@@ -3,13 +3,24 @@
 import { useState, type ReactNode } from "react";
 import { Icon } from "@/components/icons";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
+import type { NavLink } from "@/lib/navigation";
 
 /**
  * Khung trang: thanh điều hướng trái cố định trên màn hình lớn,
  * thu thành ngăn kéo mở bằng nút "Menu" trên màn hình nhỏ.
  * Thanh trên cùng được truyền vào từ server component để lấy dữ liệu (ngày, người dùng) phía server.
  */
-export function AppShell({ clinicName, topBar, children }: { clinicName: string; topBar: ReactNode; children: ReactNode }) {
+export function AppShell({
+  clinicName,
+  navItems,
+  topBar,
+  children,
+}: {
+  clinicName: string;
+  navItems: NavLink[];
+  topBar: ReactNode;
+  children: ReactNode;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const brand = (
@@ -24,7 +35,7 @@ export function AppShell({ clinicName, topBar, children }: { clinicName: string;
       {/* Thanh điều hướng – màn hình lớn */}
       <aside className="fixed inset-y-0 left-0 hidden w-64 overflow-y-auto bg-primary-strong px-3 py-5 lg:block">
         {brand}
-        <SidebarNav />
+        <SidebarNav items={navItems} />
       </aside>
 
       {/* Ngăn kéo điều hướng – màn hình nhỏ */}
@@ -48,7 +59,7 @@ export function AppShell({ clinicName, topBar, children }: { clinicName: string;
                 <Icon name="close" />
               </button>
             </div>
-            <SidebarNav onNavigate={() => setMenuOpen(false)} />
+            <SidebarNav items={navItems} onNavigate={() => setMenuOpen(false)} />
           </aside>
         </div>
       )}
