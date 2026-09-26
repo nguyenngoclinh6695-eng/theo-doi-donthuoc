@@ -22,4 +22,4 @@ Write-Host "4/4 Build bản chạy thật..."
 npm run build
 if ($LASTEXITCODE -ne 0) { throw "Build thất bại." }
 
-Write-Host "Xong. Khởi động lại website: powershell -ExecutionPolicy Bypass -File scriptsestart-web.ps1"
+Write-Host "Xong. Khởi động lại website: powershell -ExecutionPolicy Bypass -File scripts\restart-web.ps1"
