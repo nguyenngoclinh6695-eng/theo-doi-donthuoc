@@ -96,7 +96,7 @@ Sau lệnh này **không chạy `npm run db:seed` trên máy chủ thật** nữ
 
 ## 6. Cập nhật phiên bản mới / khởi động lại
 
-Sau khi sửa file `.env` (vd. thông tin phòng khám) cần khởi động lại website: `powershell -ExecutionPolicy Bypass -File scripts\restart-web.ps1` (Windows sẽ hỏi quyền Admin).
+Sau khi sửa file `.env` (vd. thông tin phòng khám) cần khởi động lại website: `powershell -ExecutionPolicy Bypass -File scripts\restart-web.ps1`.
 
 
 ```bash
