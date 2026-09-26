@@ -49,3 +49,5 @@ accounts.local.json
 # Bản sao lưu database
 /backups/
 /logs/
+# File bản scan đơn thuốc (dữ liệu bệnh nhân – không đưa lên Git)
+/storage/

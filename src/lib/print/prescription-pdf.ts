@@ -11,7 +11,7 @@ import { GUARDIAN_REQUIRED_UNDER_MONTHS } from "@/domain/prescription";
 import { prisma } from "@/lib/db";
 import { clinicDateKey } from "@/lib/time";
 
-const TEMPLATE = path.join(process.cwd(), "templates", "don-thuoc-tt26.html");
+const TEMPLATE = path.join(/* turbopackIgnore: true */ process.cwd(), "templates", "don-thuoc-tt26.html");
 
 /** Thông tin cơ sở in ở đầu đơn – khai báo trong .env. Thiếu thì không in (tránh in thông tin giả lên giấy tờ). */
 export function clinicPrintInfo(): { ten: string; dia_chi: string; dien_thoai: string } | { missing: string[] } {

@@ -9,6 +9,7 @@ import { writeAudit } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { controlFromDb, listDrugs, type DrugItem } from "@/lib/drugs";
 import { dateKeyOf, sexFromDb } from "@/lib/patients";
+import { detectScanKind, MAX_SCAN_BYTES, saveScan } from "@/lib/scans";
 import { clinicPeriods } from "@/lib/time";
 
 export interface RxState {
@@ -244,4 +245,36 @@ export async function cancelPrescription(prescriptionId: string, _prev: RxState,
   touch(rx.visitId);
   revalidatePath("/");
   return { ok: "Đã huỷ đơn." };
+}
+
+/**
+ * Tải bản scan đơn đã ký tay. Chỉ nhận đơn đã chốt; file kiểm tra bằng nội dung (PDF/JPG/PNG, tối đa 10 MB).
+ * Tải lại thì lưu file mới và giữ file cũ trên ổ đĩa (có nhật ký), không ghi đè.
+ */
+export async function uploadSignedScan(prescriptionId: string, _prev: RxState, fd: FormData): Promise<RxState> {
+  const user = await requirePermission("prescriptions.uploadScan");
+  if (!UUID_RE.test(prescriptionId)) return { error: "Mã đơn không hợp lệ." };
+  const rx = await prisma.prescription.findUnique({ where: { id: prescriptionId } });
+  if (!rx) return { error: "Không tìm thấy đơn." };
+  if (rx.status !== "FINALIZED") return { error: "Chỉ tải bản scan cho đơn đã chốt (chưa huỷ)." };
+
+  const file = fd.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Chọn file bản scan." };
+  if (file.size > MAX_SCAN_BYTES) return { error: "File quá lớn (tối đa 10 MB). Hãy scan ở độ phân giải thấp hơn." };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const kind = detectScanKind(bytes);
+  if (!kind) return { error: "Chỉ nhận file PDF, JPG hoặc PNG." };
+
+  const relPath = await saveScan(prescriptionId, bytes, kind);
+  await prisma.prescription.update({ where: { id: prescriptionId }, data: { signedScanPath: relPath, scanUploadedAt: new Date() } });
+  await writeAudit({
+    actorId: user.id,
+    action: rx.signedScanPath ? "prescription.scan.replace" : "prescription.scan.upload",
+    entityType: "Prescription",
+    entityId: prescriptionId,
+    details: { type: kind.ext, bytes: bytes.length, previous: rx.signedScanPath },
+  });
+  touch(rx.visitId);
+  revalidatePath("/");
+  return { ok: rx.signedScanPath ? "Đã thay bản scan mới (bản cũ vẫn được giữ lại)." : "Đã lưu bản scan." };
 }

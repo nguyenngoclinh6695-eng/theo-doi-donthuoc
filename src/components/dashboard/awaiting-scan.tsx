@@ -1,3 +1,5 @@
+import { uploadSignedScan } from "@/app/actions/prescriptions";
+import { ScanUploadForm } from "@/components/prescriptions/scan-upload-form";
 import type { PrescriptionAwaitingScan } from "@/domain/types";
 import { Icon } from "@/components/icons";
 import { SectionCard } from "@/components/ui/section-card";
@@ -27,16 +29,9 @@ export function AwaitingScan({ items }: { items: PrescriptionAwaitingScan[] }) {
                   </p>
                   <p className="text-sm text-ink-muted">{p.doctorName}</p>
                 </div>
-                {/* Chức năng tải lên sẽ làm ở bước đơn thuốc; nút tạm vô hiệu và ghi rõ lý do. */}
-                <button
-                  type="button"
-                  disabled
-                  title="Sẽ có ở bước làm Đơn thuốc"
-                  className="inline-flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm text-ink-muted"
-                >
-                  <Icon name="upload" className="size-4" />
-                  Tải bản scan
-                </button>
+              </div>
+              <div className="mt-2">
+                <ScanUploadForm id={p.id} action={uploadSignedScan.bind(null, p.id)} />
               </div>
             </li>
           ))}

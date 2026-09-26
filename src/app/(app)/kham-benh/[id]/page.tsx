@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addPrescriptionItem, cancelPrescription, createPrescription, finalizePrescription, removePrescriptionItem, savePrescriptionMeta } from "@/app/actions/prescriptions";
+import { addPrescriptionItem, cancelPrescription, createPrescription, finalizePrescription, removePrescriptionItem, savePrescriptionMeta, uploadSignedScan } from "@/app/actions/prescriptions";
+import { ScanUploadForm } from "@/components/prescriptions/scan-upload-form";
 import { completeVisit, deleteMeasurement, recordMeasurement, saveVisitNotes } from "@/app/actions/visits";
 import { Icon } from "@/components/icons";
 import { sexLabels } from "@/components/patients/patient-table";
@@ -87,6 +88,7 @@ export default async function VisitWorkspacePage(props: PageProps<"/kham-benh/[i
     diagnose: can(user.role, "visits.diagnose"),
     rxView: can(user.role, "prescriptions.view"),
     rxWrite: can(user.role, "prescriptions.write"),
+    scan: can(user.role, "prescriptions.uploadScan"),
   };
   const { todayKey } = clinicPeriods();
   const p = v.patient;
@@ -328,6 +330,22 @@ export default async function VisitWorkspacePage(props: PageProps<"/kham-benh/[i
                       Khổ A4
                     </a>
                     {may.rxWrite && <CancelRxForm id={rx.id} action={cancelPrescription.bind(null, rx.id)} />}
+                  </div>
+                )}
+
+                {rx.status === "FINALIZED" && (
+                  <div className="flex flex-wrap items-start gap-4 rounded-lg bg-page px-4 py-3">
+                    <div className="text-sm">
+                      <p className="font-medium">Bản scan đơn đã ký</p>
+                      {rx.hasScan ? (
+                        <a href={`/don-thuoc/${rx.id}/scan`} target="_blank" rel="noopener" className="text-primary-ink underline-offset-4 hover:underline">
+                          Xem bản scan
+                        </a>
+                      ) : (
+                        <span className="text-attention-ink">Chưa có – in, ký tay rồi tải bản scan lên.</span>
+                      )}
+                    </div>
+                    {may.scan && <ScanUploadForm id={rx.id} replacing={rx.hasScan} action={uploadSignedScan.bind(null, rx.id)} />}
                   </div>
                 )}
               </div>

@@ -30,4 +30,14 @@ try {
 }
 Write-Host "Đã sao lưu: $(Join-Path $dir $name)"
 
+# Chép kèm thư mục bản scan đơn thuốc (storage\scans). File scan không bao giờ bị ghi đè nên chỉ cần chép thêm file mới.
+$storage = Join-Path $root "storage"
+if (Test-Path $storage) {
+  $dest = Join-Path $dir "storage"
+  New-Item -ItemType Directory -Force $dest | Out-Null
+  # Chép NỘI DUNG thư mục (dấu *), tránh tạo thư mục lồng storagestorage từ lần chạy thứ hai.
+  Copy-Item (Join-Path $storage "*") $dest -Recurse -Force
+  Write-Host "Đã chép thư mục bản scan vào backups\storage"
+}
+
 Get-ChildItem $dir -Filter "phongkham-*.dump" | Sort-Object Name -Descending | Select-Object -Skip 30 | Remove-Item -Force

@@ -80,6 +80,7 @@ export interface PrescriptionView {
   finalizedAt: string | null;
   cancelledAt: string | null;
   cancelReason: string | null;
+  hasScan: boolean;
   patientSnapshot: PatientSnapshot | null;
   items: {
     id: string;
@@ -218,6 +219,7 @@ export async function getVisitWorkspace(visitId: string): Promise<VisitWorkspace
       finalizedAt: r.finalizedAt?.toISOString() ?? null,
       cancelledAt: r.cancelledAt?.toISOString() ?? null,
       cancelReason: r.cancelReason,
+      hasScan: r.scanUploadedAt !== null,
       patientSnapshot: (r.patientSnapshot as PatientSnapshot | null) ?? null,
       items: r.items.map((i) => ({
         id: i.id,

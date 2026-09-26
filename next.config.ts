@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: appHost ? [appHost] : [],
+      // Bản scan đơn thuốc tải lên qua server action (tối đa 10 MB, kiểm tra lại ở máy chủ).
+      bodySizeLimit: "11mb",
     },
   },
   async headers() {
