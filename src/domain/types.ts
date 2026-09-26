@@ -1,7 +1,7 @@
 // Kiểu dữ liệu nghiệp vụ dùng chung. Giao diện chỉ phụ thuộc vào các kiểu này,
 // nên khi thay dữ liệu mẫu bằng database (Prisma) thì giao diện không phải sửa.
 
-export type UserRole = "bac_si" | "dieu_duong" | "tiep_don" | "quan_tri";
+export type UserRole = "bac_si" | "dieu_duong" | "tiep_don" | "quan_tri" | "duoc_si" | "ky_thuat_vien";
 
 export interface CurrentUser {
   id: string;

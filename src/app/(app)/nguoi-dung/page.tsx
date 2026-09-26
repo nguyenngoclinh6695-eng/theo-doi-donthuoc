@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { renameUser } from "@/app/actions/users";
 import { CreateUserForm } from "@/components/users/create-user-form";
+import { RenameForm } from "@/components/users/rename-form";
 import { RoleSelect, UserRowActions } from "@/components/users/user-row-actions";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -14,7 +16,7 @@ export default async function UsersPage() {
   const admin = await requirePermission("users.manage");
   const users = await prisma.user.findMany({
     orderBy: [{ isActive: "desc" }, { role: "asc" }, { fullName: "asc" }],
-    select: { id: true, username: true, fullName: true, role: true, isActive: true, lastLoginAt: true, lockedUntil: true, mustChangePassword: true },
+    select: { id: true, username: true, fullName: true, role: true, isActive: true, isSample: true, lastLoginAt: true, lockedUntil: true, mustChangePassword: true },
   });
   const now = new Date();
 
@@ -46,6 +48,10 @@ export default async function UsersPage() {
                     {u.isActive ? <StatusBadge tone="success" icon="check" label="Đang hoạt động" /> : <StatusBadge tone="danger" icon="lock" label="Đã khoá" />}
                     {locked && <StatusBadge tone="attention" icon="clock" label="Tạm khoá do nhập sai" />}
                     {u.mustChangePassword && <StatusBadge tone="neutral" icon="key" label="Chờ đổi mật khẩu" />}
+                    {u.isSample && <StatusBadge tone="attention" icon="alert" label="Tài khoản mẫu" />}
+                  </div>
+                  <div className="mt-2">
+                    <RenameForm id={u.id} fullName={u.fullName} action={renameUser.bind(null, u.id)} />
                   </div>
                 </div>
                 <RoleSelect userId={u.id} role={toDomainRole(u.role)} roles={ALL_ROLES} disabled={u.id === admin.id} />

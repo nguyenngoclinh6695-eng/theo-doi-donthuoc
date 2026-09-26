@@ -42,6 +42,8 @@ export const roleLabels: Record<UserRole, string> = {
   dieu_duong: "Điều dưỡng",
   tiep_don: "Tiếp đón",
   quan_tri: "Quản trị",
+  duoc_si: "Dược sĩ",
+  ky_thuat_vien: "Kỹ thuật viên",
 };
 
 /** Ngày giờ đầy đủ có năm ("26/09/2026 08:30") – dùng cho lịch sử có thể trải qua nhiều năm. */

@@ -13,6 +13,17 @@ npm run dev
 
 Mở http://localhost:3000.
 
+## Triển khai cho phòng khám
+
+Máy chủ đặt tại phòng khám, nhân viên truy cập bằng đường link qua VPN Tailscale: xem **[docs/TRIEN-KHAI.md](docs/TRIEN-KHAI.md)**.
+
+| Lệnh | Việc |
+|---|---|
+| `npm run accounts:create` | Tạo/cập nhật tài khoản thật từ file tạm `accounts.local.json` (xoá file sau khi chạy) |
+| `npm run db:clear-sample -- --xac-nhan` | Xoá toàn bộ dữ liệu mẫu trước khi dùng thật |
+| `scripts\deploy.ps1` | Sao lưu + cài đặt/cập nhật + build trên máy chủ |
+| `scripts\backup-db.ps1` | Sao lưu database ra `backups\` |
+
 ## Database
 
 Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì sao chép `.env.example` thành `.env` và điền mật khẩu.
@@ -20,7 +31,7 @@ Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì 
 | Lệnh | Việc |
 |---|---|
 | `npm run db:migrate` | Áp dụng thay đổi trong `prisma/schema.prisma` và tạo migration mới |
-| `npm run db:seed` | Xoá dữ liệu mẫu cũ và nạp lại (từ chối chạy nếu DB có bệnh nhân thật) |
+| `npm run db:seed` | Xoá dữ liệu mẫu cũ và nạp lại (từ chối chạy nếu DB có bệnh nhân thật; không đụng tài khoản thật). Chỉ dùng trên máy phát triển |
 | `npm run db:studio` | Mở giao diện xem/sửa dữ liệu trên trình duyệt |
 | `npm run db:deploy` | Áp dụng migration trên máy chủ thật (không tạo migration mới) |
 
@@ -28,6 +39,7 @@ Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì 
 
 ## Đăng nhập và phân quyền
 
+- Vai trò: Bác sĩ, Điều dưỡng, Tiếp đón, Dược sĩ, Kỹ thuật viên, Quản trị (toàn quyền).
 - Tài khoản mẫu (sau `npm run db:seed`): `bs.mau1`, `bs.mau2` (bác sĩ), `dieuduong.mau`, `tiepdon.mau`, `quantri.mau`.
   Mật khẩu chung là giá trị `SEED_USER_PASSWORD` trong file `.env`.
 - Quyền của từng vai trò nằm trong một file duy nhất: `src/domain/permissions.ts`.

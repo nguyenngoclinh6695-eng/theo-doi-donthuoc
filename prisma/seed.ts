@@ -48,10 +48,11 @@ async function main() {
     throw new Error(`Thư viện chuẩn đã có ${sources} văn bản nguồn – dừng seed để không làm mất ngưỡng đã nhập và duyệt.`);
   }
 
-  // Xoá dữ liệu mẫu cũ theo thứ tự phụ thuộc khoá ngoại. Thuốc thật (isSample = false) được giữ nguyên.
+  // Xoá dữ liệu mẫu cũ theo thứ tự phụ thuộc khoá ngoại.
+  // Tài khoản thật và thuốc thật (isSample = false) được giữ nguyên, kèm phiên đăng nhập và nhật ký của họ.
   await prisma.$transaction([
-    prisma.auditLog.deleteMany(),
-    prisma.session.deleteMany(),
+    prisma.auditLog.deleteMany({ where: { actor: { isSample: true } } }),
+    prisma.session.deleteMany({ where: { user: { isSample: true } } }),
     prisma.measurement.deleteMany(),
     prisma.reminderCall.deleteMany(),
     prisma.prescription.deleteMany(), // Xoá kèm các dòng thuốc (cascade), nên phải trước khi xoá thuốc mẫu
@@ -59,7 +60,7 @@ async function main() {
     prisma.visit.deleteMany(),
     prisma.appointment.deleteMany(),
     prisma.patient.deleteMany(),
-    prisma.user.deleteMany(),
+    prisma.user.deleteMany({ where: { isSample: true } }),
   ]);
   // Chỉ có dữ liệu mẫu nên đặt lại bộ đếm mã bệnh nhân: hồ sơ thật đầu tiên sẽ là BN-000001.
   await prisma.$executeRaw`ALTER SEQUENCE "patient_code_seq" RESTART WITH 1`;
@@ -73,7 +74,7 @@ async function main() {
   }
   const passwordHash = await hashPassword(seedPassword);
   const account = (username: string, fullName: string, role: "DOCTOR" | "NURSE" | "RECEPTION" | "ADMIN") =>
-    prisma.user.create({ data: { username, fullName, role, passwordHash, mustChangePassword: false } });
+    prisma.user.create({ data: { username, fullName, role, passwordHash, mustChangePassword: false, isSample: true } });
 
   const [doctor1, doctor2, reception] = await Promise.all([
     account("bs.mau1", "BS. Mẫu Văn Một", "DOCTOR"),

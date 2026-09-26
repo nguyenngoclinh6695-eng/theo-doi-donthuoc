@@ -16,6 +16,8 @@ enum UserRole {
   NURSE
   RECEPTION
   ADMIN
+  PHARMACIST // Dược sĩ
+  TECHNICIAN // Kỹ thuật viên
 }
 
 enum Sex {
@@ -44,6 +46,8 @@ model User {
   fullName           String
   role               UserRole
   isActive           Boolean   @default(true)
+  /// Tài khoản mẫu do script seed tạo; seed chỉ xoá/tạo lại tài khoản mẫu, không đụng tới tài khoản thật.
+  isSample           Boolean   @default(false)
   /// Mật khẩu đã băm bằng scrypt (không bao giờ lưu mật khẩu gốc). Null = chưa đặt, không đăng nhập được.
   passwordHash       String?
   /// Bắt đổi mật khẩu ở lần đăng nhập tới (tài khoản mới, hoặc vừa được quản trị đặt lại mật khẩu).

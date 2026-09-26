@@ -11,7 +11,8 @@ const scrypt = (password: string, salt: Buffer, keylen: number, options: ScryptO
 const PARAMS = { N: 16384, r: 8, p: 1 } as const;
 const KEY_LENGTH = 64;
 
-export const PASSWORD_MIN_LENGTH = 10;
+// Phòng khám chọn dùng mật khẩu ngắn (tối thiểu 6 ký tự) – đã được cảnh báo rủi ro. Tăng lại số này khi có thể.
+export const PASSWORD_MIN_LENGTH = 6;
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);

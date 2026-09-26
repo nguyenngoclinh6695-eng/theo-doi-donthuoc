@@ -2,7 +2,8 @@
 // Menu, trang và server action đều hỏi qua hàm can(); muốn đổi quyền chỉ sửa bảng dưới đây.
 //
 // Nguyên tắc: mỗi vai trò chỉ có quyền tối thiểu cho công việc của mình.
-// Quản trị lo tài khoản, danh mục, nhật ký – mặc định KHÔNG xem hồ sơ bệnh nhân.
+// Riêng Quản trị được TOÀN QUYỀN theo yêu cầu của phòng khám (kể cả kê/chốt đơn, duyệt ngưỡng).
+// Quy tắc hai người vẫn áp dụng cho mọi vai trò: không ai tự duyệt bộ ngưỡng do chính mình soạn.
 
 import type { UserRole } from "@/domain/types";
 
@@ -72,7 +73,18 @@ const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     "patients.edit",
     "prescriptions.uploadScan",
   ],
-  quan_tri: ["dashboard.view", "standards.view", "standards.manage", "drugs.view", "drugs.manage", "users.manage", "audit.view"],
+  duoc_si: [
+    "dashboard.view",
+    "patients.view",
+    "prescriptions.view",
+    "prescriptions.uploadScan",
+    "drugs.view",
+    "drugs.manage",
+    "standards.view",
+  ],
+  // Kỹ thuật viên: đo chỉ số và nhập kết quả xét nghiệm (dưới dạng chỉ số); không chẩn đoán, không kê đơn.
+  ky_thuat_vien: ["dashboard.view", "appointments.view", "patients.view", "visits.view", "visits.record", "standards.view"],
+  quan_tri: PERMISSIONS,
 };
 
 export function can(role: UserRole, permission: Permission): boolean {

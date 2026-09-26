@@ -99,3 +99,14 @@ export async function changeUserRole(userId: string, formData: FormData): Promis
   });
   revalidatePath("/nguoi-dung");
 }
+
+export async function renameUser(userId: string, _prev: UserFormState, formData: FormData): Promise<UserFormState> {
+  const admin = await requirePermission("users.manage");
+  if (!UUID_RE.test(userId)) return { error: "Mã người dùng không hợp lệ." };
+  const fullName = String(formData.get("fullName") ?? "").trim().replace(/\s+/g, " ");
+  if (fullName.length < 2 || fullName.length > 100) return { error: "Họ tên phải từ 2 đến 100 ký tự." };
+  await prisma.user.update({ where: { id: userId }, data: { fullName } });
+  await writeAudit({ actorId: admin.id, action: "user.rename", entityType: "User", entityId: userId });
+  revalidatePath("/nguoi-dung");
+  return {};
+}

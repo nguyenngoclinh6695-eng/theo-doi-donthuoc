@@ -8,6 +8,8 @@ const toDomain: Record<DbUserRole, UserRole> = {
   NURSE: "dieu_duong",
   RECEPTION: "tiep_don",
   ADMIN: "quan_tri",
+  PHARMACIST: "duoc_si",
+  TECHNICIAN: "ky_thuat_vien",
 };
 
 const toDb = Object.fromEntries(Object.entries(toDomain).map(([db, domain]) => [domain, db])) as Record<UserRole, DbUserRole>;

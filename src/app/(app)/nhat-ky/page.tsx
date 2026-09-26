@@ -20,6 +20,7 @@ const actionLabels: Record<string, string> = {
   "user.activate": "Mở khoá tài khoản",
   "user.deactivate": "Khoá tài khoản",
   "user.role.change": "Đổi vai trò",
+  "user.rename": "Sửa họ tên tài khoản",
   "reminder_call.create": "Ghi nhận gọi nhắc trễ hẹn",
   "patient.create": "Thêm hồ sơ bệnh nhân",
   "patient.update": "Sửa hồ sơ bệnh nhân",

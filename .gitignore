@@ -43,3 +43,9 @@ next-env.d.ts
 
 # Prisma Client sinh tự động (chạy "npx prisma generate")
 /src/generated/
+
+# Danh sách tài khoản kèm mật khẩu – chỉ tạo tạm để chạy scripts/create-accounts.ts rồi xoá
+accounts.local.json
+# Bản sao lưu database
+/backups/
+/logs/
