@@ -237,6 +237,7 @@ async function main() {
         status: "FINALIZED",
         finalizedAt,
         diagnosisText: "Chẩn đoán mẫu – dữ liệu thử nghiệm",
+        doctorNameSnapshot: doctors[plan.idx % 2].fullName,
         patientSnapshot: {
           code: pt.code,
           fullName: pt.fullName,
@@ -254,11 +255,20 @@ async function main() {
         items: {
           create: {
             drugId: firstDrug.id,
-            drugName: `${firstDrug.activeIngredient} ${firstDrug.strength} (${firstDrug.brandName})`,
+            drugName: `${firstDrug.activeIngredient} (${firstDrug.brandName}) ${firstDrug.strength}`,
+            drugIngredient: firstDrug.activeIngredient,
+            drugBrand: firstDrug.brandName,
+            drugStrength: firstDrug.strength,
             drugDosageForm: firstDrug.dosageForm,
             unit: firstDrug.unit,
             quantity: 10,
-            dosageInstruction: "Cách dùng mẫu – dữ liệu thử nghiệm",
+            // Cách dùng mẫu chỉ để thử chức năng in, không phải chỉ định điều trị.
+            route: "Uống",
+            dosePerTime: "(liều mẫu)",
+            timesPerDay: 1,
+            timing: "(thời điểm mẫu)",
+            durationDays: 5,
+            dosageInstruction: "Dữ liệu thử nghiệm.",
           },
         },
       },

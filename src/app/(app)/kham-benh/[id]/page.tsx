@@ -55,10 +55,7 @@ function RxItemsTable({ rx, editable }: { rx: PrescriptionView; editable: boolea
               <td className="whitespace-nowrap py-2 pr-3 tabular-nums">
                 {i.quantity} {i.unit}
               </td>
-              <td className="py-2 pr-3">
-                {i.dosageInstruction}
-                {i.durationDays && <span className="block text-xs text-ink-muted">Dùng {i.durationDays} ngày</span>}
-              </td>
+              <td className="py-2 pr-3">{i.usage}</td>
               {editable && (
                 <td className="py-2 text-right">
                   <form action={removePrescriptionItem.bind(null, i.id)}>
@@ -323,9 +320,13 @@ export default async function VisitWorkspacePage(props: PageProps<"/kham-benh/[i
 
                 {rx.status === "FINALIZED" && (
                   <div className="flex flex-wrap items-start gap-3 border-t border-line pt-4">
-                    <button type="button" disabled title="Sẽ có ở bước in đơn (bước 6)" className={secondaryButtonClass}>
-                      In đơn
-                    </button>
+                    {/* Mở PDF ở tab mới; in bằng nút in của trình xem PDF. */}
+                    <a href={`/don-thuoc/${rx.id}/pdf`} target="_blank" rel="noopener" className={primaryButtonClass}>
+                      In đơn (A5)
+                    </a>
+                    <a href={`/don-thuoc/${rx.id}/pdf?kho=A4`} target="_blank" rel="noopener" className={secondaryButtonClass}>
+                      Khổ A4
+                    </a>
                     {may.rxWrite && <CancelRxForm id={rx.id} action={cancelPrescription.bind(null, rx.id)} />}
                   </div>
                 )}

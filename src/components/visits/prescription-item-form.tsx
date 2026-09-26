@@ -122,7 +122,8 @@ export function PrescriptionItemForm({ action }: { action: (state: RxState, fd: 
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-[8rem_1fr_8rem]">
+      {/* Cách dùng tách đủ các phần theo Điều 6 khoản 6 TT 26/2025; hệ thống không gợi ý liều. */}
+      <div className="grid gap-3 sm:grid-cols-3">
         <div>
           <label htmlFor="rx-qty" className="block text-sm font-medium">
             Số lượng{selected && <span className="font-normal text-ink-muted"> ({selected.unit})</span>}
@@ -130,16 +131,41 @@ export function PrescriptionItemForm({ action }: { action: (state: RxState, fd: 
           <input id="rx-qty" name="quantity" inputMode="numeric" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="rx-usage" className="block text-sm font-medium">
-            Cách dùng
+          <label htmlFor="rx-route" className="block text-sm font-medium">
+            Đường dùng
           </label>
-          <input id="rx-usage" name="dosageInstruction" required maxLength={500} placeholder="Liều, số lần/ngày, thời điểm dùng" className={inputClass} />
+          {/* key đổi theo thuốc để ô tự điền lại đường dùng khai báo trong danh mục (nếu có). */}
+          <input key={selected?.id ?? "none"} id="rx-route" name="route" required maxLength={100} defaultValue={selected?.route ?? ""} placeholder="vd. Uống" className={inputClass} />
+        </div>
+        <div>
+          <label htmlFor="rx-dose" className="block text-sm font-medium">
+            Liều mỗi lần
+          </label>
+          <input id="rx-dose" name="dosePerTime" required maxLength={100} placeholder="vd. 1 viên" className={inputClass} />
+        </div>
+        <div>
+          <label htmlFor="rx-times" className="block text-sm font-medium">
+            Số lần/ngày
+          </label>
+          <input id="rx-times" name="timesPerDay" inputMode="numeric" required className={inputClass} />
+        </div>
+        <div>
+          <label htmlFor="rx-timing" className="block text-sm font-medium">
+            Thời điểm dùng
+          </label>
+          <input id="rx-timing" name="timing" required maxLength={200} placeholder="vd. sau ăn sáng và tối" className={inputClass} />
         </div>
         <div>
           <label htmlFor="rx-days" className="block text-sm font-medium">
-            Số ngày <span className="font-normal text-ink-muted">(tuỳ chọn)</span>
+            Số ngày dùng
           </label>
-          <input id="rx-days" name="durationDays" inputMode="numeric" className={inputClass} />
+          <input id="rx-days" name="durationDays" inputMode="numeric" required className={inputClass} />
+        </div>
+        <div className="sm:col-span-3">
+          <label htmlFor="rx-note" className="block text-sm font-medium">
+            Ghi chú thêm <span className="font-normal text-ink-muted">(không bắt buộc)</span>
+          </label>
+          <input id="rx-note" name="dosageInstruction" maxLength={500} className={inputClass} />
         </div>
       </div>
 

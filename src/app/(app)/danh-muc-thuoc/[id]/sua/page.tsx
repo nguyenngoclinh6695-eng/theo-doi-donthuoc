@@ -44,6 +44,7 @@ export default async function EditDrugPage(props: PageProps<"/danh-muc-thuoc/[id
             brandName: d.brandName ?? "",
             route: d.route ?? "",
             control: d.control,
+            isCombination: d.isCombination ? "true" : "",
             note: d.note ?? "",
           }}
           submitLabel="Lưu thay đổi"

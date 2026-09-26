@@ -47,6 +47,7 @@ const actionLabels: Record<string, string> = {
   "prescription.finalize": "Chốt đơn thuốc",
   "prescription.draft.delete": "Xoá đơn nháp",
   "prescription.cancel": "Huỷ đơn đã chốt",
+  "prescription.print": "In đơn thuốc (PDF)",
 };
 
 export default async function AuditLogPage() {

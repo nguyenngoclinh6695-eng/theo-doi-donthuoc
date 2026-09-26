@@ -42,6 +42,13 @@ export function DrugForm({
             ))}
           </select>
         </FormField>
+        <label className="flex items-start gap-2 text-sm sm:col-span-2">
+          <input type="checkbox" name="isCombination" defaultChecked={v.isCombination === "on" || v.isCombination === "true"} className="mt-0.5 size-4" />
+          <span>
+            Thuốc nhiều hoạt chất
+            <span className="block text-xs text-ink-muted">Trên đơn sẽ ghi theo tên thương mại (bắt buộc nhập tên thương mại).</span>
+          </span>
+        </label>
         <div className="sm:col-span-2">
           <FormField id="note" name="note" label="Ghi chú nội bộ" optional defaultValue={v.note} error={e.note} />
         </div>

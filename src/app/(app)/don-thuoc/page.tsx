@@ -84,6 +84,11 @@ export default async function PrescriptionsPage(props: PageProps<"/don-thuoc">) 
                         {r.status === "FINALIZED" && <StatusBadge tone="success" icon="lock" label="Đã chốt" />}
                         {r.status === "CANCELLED" && <StatusBadge tone="danger" icon="close" label="Đã huỷ" />}
                         {r.status === "FINALIZED" && !r.hasScan && <StatusBadge tone="attention" icon="upload" label="Chưa có bản scan" />}
+                        {r.status === "FINALIZED" && (
+                          <a href={`/don-thuoc/${r.id}/pdf`} target="_blank" rel="noopener" className="text-sm font-medium text-primary-ink underline-offset-4 hover:underline">
+                            In đơn
+                          </a>
+                        )}
                       </div>
                     </td>
                   </tr>

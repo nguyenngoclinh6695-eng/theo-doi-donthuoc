@@ -181,28 +181,32 @@ model Visit {
 
 /// Đơn thuốc. Bản nháp sửa được; đã chốt thì không sửa (muốn đổi phải huỷ và kê đơn mới).
 model Prescription {
-  id              String             @id @default(uuid()) @db.Uuid
+  id                 String             @id @default(uuid()) @db.Uuid
   /// Số đơn nội bộ, cấp tự động từ sequence.
-  code            String             @unique @default(dbgenerated("('DT-' || lpad((nextval('prescription_code_seq'::regclass))::text, 6, '0'))"))
-  patientId       String             @db.Uuid
-  doctorId        String             @db.Uuid
-  visitId         String?            @db.Uuid
-  status          PrescriptionStatus @default(DRAFT)
-  finalizedAt     DateTime?          @db.Timestamptz(3)
+  code               String             @unique @default(dbgenerated("('DT-' || lpad((nextval('prescription_code_seq'::regclass))::text, 6, '0'))"))
+  patientId          String             @db.Uuid
+  doctorId           String             @db.Uuid
+  visitId            String?            @db.Uuid
+  status             PrescriptionStatus @default(DRAFT)
+  finalizedAt        DateTime?          @db.Timestamptz(3)
   /// Đường dẫn file scan đơn đã có chữ ký tay; null = chưa tải lên.
-  signedScanPath  String?
-  scanUploadedAt  DateTime?          @db.Timestamptz(3)
+  signedScanPath     String?
+  scanUploadedAt     DateTime?          @db.Timestamptz(3)
   /// Chẩn đoán ghi trên đơn (do bác sĩ ghi).
-  diagnosisText   String?
+  diagnosisText      String?
   /// Lời dặn của bác sĩ.
-  advice          String?
-  followUpDate    DateTime?          @db.Date
+  advice             String?
+  followUpDate       DateTime?          @db.Date
   /// Ảnh chụp thông tin bệnh nhân lúc chốt đơn – bản in luôn khớp với lúc chốt dù hồ sơ sửa sau này.
-  patientSnapshot Json?
-  cancelledAt     DateTime?          @db.Timestamptz(3)
-  cancelReason    String?
-  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime           @default(now()) @updatedAt @db.Timestamptz(3)
+  patientSnapshot    Json?
+  /// Họ tên bác sĩ kê đơn lúc chốt (in trên đơn).
+  doctorNameSnapshot String?
+  /// Cân nặng (kg) lấy từ chỉ số "Cân nặng" của lượt khám lúc chốt.
+  weightKgSnapshot   Decimal?           @db.Decimal(6, 2)
+  cancelledAt        DateTime?          @db.Timestamptz(3)
+  cancelReason       String?
+  createdAt          DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime           @default(now()) @updatedAt @db.Timestamptz(3)
 
   patient Patient            @relation(fields: [patientId], references: [id], onDelete: Restrict)
   doctor  User               @relation(fields: [doctorId], references: [id])
@@ -214,17 +218,28 @@ model Prescription {
 
 /// Một dòng thuốc trong đơn. Lưu kèm tên/đơn vị thuốc lúc kê để đơn cũ không đổi khi danh mục sửa.
 model PrescriptionItem {
-  id                String @id @default(uuid()) @db.Uuid
-  prescriptionId    String @db.Uuid
-  drugId            String @db.Uuid
+  id                String  @id @default(uuid()) @db.Uuid
+  prescriptionId    String  @db.Uuid
+  drugId            String  @db.Uuid
+  /// Tên hiển thị lúc kê (dùng trên màn hình).
   drugName          String
+  /// Ảnh chụp thông tin thuốc lúc kê – để in đúng cách ghi tên thuốc theo Điều 6 khoản 5, kể cả khi danh mục sửa sau này.
+  drugIngredient    String  @default("")
+  drugBrand         String?
+  drugStrength      String  @default("")
+  drugIsCombination Boolean @default(false)
   drugDosageForm    String
   unit              String
   quantity          Int
-  /// Cách dùng do bác sĩ ghi (liều, số lần, thời điểm).
-  dosageInstruction String
+  /// Cách dùng theo Điều 6 khoản 6: đường dùng, liều mỗi lần, số lần/ngày, thời điểm dùng, số ngày.
+  route             String?
+  dosePerTime       String?
+  timesPerDay       Int?
+  timing            String?
   durationDays      Int?
-  sortOrder         Int    @default(0)
+  /// Ghi chú thêm về cách dùng (không bắt buộc).
+  dosageInstruction String  @default("")
+  sortOrder         Int     @default(0)
 
   prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
   drug         Drug         @relation(fields: [drugId], references: [id])
@@ -286,6 +301,8 @@ model Drug {
   unit              String
   brandName         String?
   route             String?
+  /// Thuốc nhiều hoạt chất: trên đơn ghi theo tên thương mại (Điều 6 khoản 5 TT 26/2025).
+  isCombination     Boolean            @default(false)
   control           DrugControl        @default(NORMAL)
   isActive          Boolean            @default(true)
   note              String?

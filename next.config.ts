@@ -6,6 +6,8 @@ const appHost = process.env.APP_HOST?.trim();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // playwright-core điều khiển trình duyệt thật để in PDF – chạy trực tiếp từ node_modules, không đóng gói.
+  serverExternalPackages: ["playwright-core"],
   experimental: {
     serverActions: {
       allowedOrigins: appHost ? [appHost] : [],

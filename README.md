@@ -55,6 +55,8 @@ Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì 
 - Chỉ số ghi trong lượt khám lưu kèm bộ ngưỡng đã dùng lúc ghi (ngưỡng đổi sau này không làm đổi kết quả cũ).
 - Chốt đơn chỉ kiểm tra đủ thông tin hành chính (`src/domain/prescription.ts` – cần đối chiếu với Phụ lục I TT 26/2025/TT-BYT);
   không kiểm tra lâm sàng, không gợi ý thuốc. Thuốc kiểm soát đặc biệt bị chặn (chưa hỗ trợ mẫu đơn riêng).
+- **In đơn thuốc**: nút “In đơn (A5)” / “Khổ A4” ở đơn đã chốt → PDF sinh từ `templates/don-thuoc-tt26.html` (Phụ lục I TT 26/2025, đơn “C”)
+  bằng Microsoft Edge có sẵn (thư viện `playwright-core`). Dữ liệu in lấy từ ảnh chụp lúc chốt đơn. Cần khai báo `CLINIC_NAME/ADDRESS/PHONE` trong `.env`.
 - Kiểm thử logic nghiệp vụ: `npm test`.
 
 ## Sửa nhanh

@@ -24,7 +24,11 @@ export interface PrescriptionLine {
   drugActive: boolean;
   drugControl: DrugControl;
   quantity: number;
-  dosageInstruction: string;
+  /** Cách dùng theo Điều 6 khoản 6 TT 26/2025 – do bác sĩ ghi. */
+  route: string | null;
+  dosePerTime: string | null;
+  timesPerDay: number | null;
+  timing: string | null;
   durationDays: number | null;
 }
 
@@ -32,6 +36,8 @@ export interface PrescriptionCheckInput {
   patient: PatientForPrescription;
   diagnosisText: string | null;
   lines: PrescriptionLine[];
+  /** Cân nặng (kg) đo trong lượt khám; null nếu chưa đo. */
+  weightKg: number | null;
   /** "YYYY-MM-DD" */
   todayKey: string;
   followUpDate: string | null;
@@ -61,8 +67,9 @@ export function checkPrescription(input: PrescriptionCheckInput): PrescriptionCh
   if (!p.address) errors.push("Hồ sơ thiếu địa chỉ.");
   if (p.dateOfBirth) {
     const age = ageOn(p.dateOfBirth, input.todayKey);
-    if (age.months < GUARDIAN_REQUIRED_UNDER_MONTHS && !p.guardianName) {
-      errors.push(`Bệnh nhân dưới ${GUARDIAN_REQUIRED_UNDER_MONTHS} tháng tuổi: hồ sơ cần ghi tên cha/mẹ hoặc người giám hộ.`);
+    if (age.months < GUARDIAN_REQUIRED_UNDER_MONTHS) {
+      if (!p.guardianName) errors.push(`Bệnh nhân dưới ${GUARDIAN_REQUIRED_UNDER_MONTHS} tháng tuổi: hồ sơ cần ghi tên cha/mẹ hoặc người đưa trẻ.`);
+      if (input.weightKg === null) errors.push(`Bệnh nhân dưới ${GUARDIAN_REQUIRED_UNDER_MONTHS} tháng tuổi: cần ghi chỉ số “Cân nặng” trong lượt khám này.`);
     }
   }
   if (!p.idNumber) warnings.push("Hồ sơ chưa có số CCCD/định danh cá nhân.");
@@ -82,7 +89,15 @@ export function checkPrescription(input: PrescriptionCheckInput): PrescriptionCh
     // Fail-closed: hệ thống chưa hỗ trợ mẫu đơn riêng cho thuốc kiểm soát đặc biệt.
     if (l.drugControl !== "thuong") errors.push(`${n}: thuốc thuộc diện kiểm soát đặc biệt, cần kê bằng mẫu đơn riêng – hệ thống chưa hỗ trợ.`);
     if (!Number.isInteger(l.quantity) || l.quantity < 1 || l.quantity > MAX_QUANTITY) errors.push(`${n}: số lượng phải là số nguyên từ 1 đến ${MAX_QUANTITY}.`);
-    if (!l.dosageInstruction.trim()) errors.push(`${n}: chưa ghi cách dùng.`);
+    const missing = [
+      !l.route?.trim() && "đường dùng",
+      !l.dosePerTime?.trim() && "liều mỗi lần",
+      l.timesPerDay === null && "số lần/ngày",
+      !l.timing?.trim() && "thời điểm dùng",
+      l.durationDays === null && "số ngày dùng",
+    ].filter(Boolean);
+    if (missing.length) errors.push(`${n}: chưa ghi ${missing.join(", ")}.`);
+    if (l.timesPerDay !== null && (!Number.isInteger(l.timesPerDay) || l.timesPerDay < 1 || l.timesPerDay > 24)) errors.push(`${n}: số lần/ngày phải từ 1 đến 24.`);
     if (l.durationDays !== null && (!Number.isInteger(l.durationDays) || l.durationDays < 1 || l.durationDays > 365)) {
       errors.push(`${n}: số ngày dùng phải từ 1 đến 365.`);
     }
@@ -98,3 +113,25 @@ export interface PatientSnapshot extends PatientForPrescription {
   /** Tuổi đã tính lúc chốt, vd. "45 tuổi" hoặc "30 tháng tuổi". */
   ageText: string;
 }
+
+export interface UsageParts {
+  route: string | null;
+  dosePerTime: string | null;
+  timesPerDay: number | null;
+  timing: string | null;
+  durationDays: number | null;
+  /** Ghi chú thêm (không bắt buộc). */
+  note?: string | null;
+}
+
+/**
+ * Câu cách dùng in trên đơn – cùng công thức với template in (Điều 6 khoản 6 TT 26/2025):
+ * "Uống: mỗi lần 1 viên, ngày 2 lần, sau ăn. Dùng 5 ngày."
+ */
+export function usageText(u: UsageParts): string {
+  const base = `${u.route ?? ""}: mỗi lần ${u.dosePerTime ?? ""}, ngày ${u.timesPerDay ?? ""} lần, ${u.timing ?? ""}. Dùng ${u.durationDays ?? ""} ngày.`;
+  return u.note?.trim() ? `${base} ${u.note.trim()}` : base;
+}
+
+/** Số lượng in trên đơn: dưới 10 thì thêm số 0 phía trước (Điều 6 khoản 7a TT 26/2025). */
+export const printedQuantity = (n: number) => (Number.isInteger(n) && n >= 0 && n < 10 ? `0${n}` : String(n));

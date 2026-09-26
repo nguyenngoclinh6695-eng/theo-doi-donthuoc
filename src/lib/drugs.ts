@@ -22,6 +22,7 @@ export interface DrugItem {
   brandName: string | null;
   route: string | null;
   control: DrugControl;
+  isCombination: boolean;
   isActive: boolean;
   note: string | null;
 }
@@ -36,6 +37,7 @@ export const toDrugItem = (d: DrugRow): DrugItem => ({
   brandName: d.brandName,
   route: d.route,
   control: controlFromDb[d.control],
+  isCombination: d.isCombination,
   isActive: d.isActive,
   note: d.note,
 });

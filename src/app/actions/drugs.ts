@@ -30,6 +30,7 @@ const toDb = (d: DrugInput) => ({
   brandName: d.brandName,
   route: d.route,
   control: controlToDb[d.control],
+  isCombination: d.isCombination,
   note: d.note,
   searchText: drugSearchText(d),
 });

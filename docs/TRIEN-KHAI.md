@@ -20,6 +20,7 @@ Một máy tính Windows chạy liên tục (không tắt/ngủ). Cài:
 1. **Node.js LTS** (nodejs.org) và **Git**.
 2. **PostgreSQL 17** (postgresql.org hoặc `winget install PostgreSQL.PostgreSQL.17`). Ghi nhớ mật khẩu tài khoản `postgres`.
 3. Tắt chế độ ngủ: *Settings → System → Power → Sleep: Never*.
+4. **Microsoft Edge** (có sẵn trên Windows 10/11) – hệ thống dùng Edge để in đơn thuốc ra PDF. Máy không có Edge thì cài Chromium và khai báo `PDF_BROWSER_PATH` trong `.env`.
 
 Tạo database và tài khoản riêng cho ứng dụng (thay `MAT_KHAU_APP` bằng mật khẩu mạnh, chỉ dùng ở file `.env`):
 
@@ -41,6 +42,7 @@ Sửa `.env`:
 |---|---|
 | `DATABASE_URL` | `postgresql://phongkham_app:MAT_KHAU_APP@localhost:5432/phongkham?schema=public` |
 | `APP_HOST` | tên miền Tailscale của máy chủ, vd. `phongkham.tail1234.ts.net` (điền sau bước 4) |
+| `CLINIC_NAME`, `CLINIC_ADDRESS`, `CLINIC_PHONE` | tên, địa chỉ, điện thoại phòng khám **in trên đơn thuốc** (thiếu thì hệ thống từ chối in) |
 | `SEED_USER_PASSWORD` | xoá dòng này trên máy chủ thật |
 
 Chạy cài đặt (sao lưu → cài thư viện → áp dụng database → build):

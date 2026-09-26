@@ -2,7 +2,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { checkPrescription, type PrescriptionCheckInput, type PrescriptionLine } from "./prescription";
+import { checkPrescription, printedQuantity, usageText, type PrescriptionCheckInput, type PrescriptionLine } from "./prescription";
 
 const line = (over: Partial<PrescriptionLine> = {}): PrescriptionLine => ({
   drugId: "d1",
@@ -10,7 +10,10 @@ const line = (over: Partial<PrescriptionLine> = {}): PrescriptionLine => ({
   drugActive: true,
   drugControl: "thuong",
   quantity: 10,
-  dosageInstruction: "Theo chỉ dẫn của bác sĩ",
+  route: "Uống",
+  dosePerTime: "1 viên",
+  timesPerDay: 2,
+  timing: "sau ăn",
   durationDays: 5,
   ...over,
 });
@@ -27,6 +30,7 @@ const base = (over: Partial<PrescriptionCheckInput> = {}): PrescriptionCheckInpu
   },
   diagnosisText: "Chẩn đoán do bác sĩ ghi",
   lines: [line()],
+  weightKg: null,
   todayKey: "2026-09-26",
   followUpDate: null,
   ...over,
@@ -48,10 +52,17 @@ describe("checkPrescription", () => {
     assert.equal(r.errors.length, 3);
   });
 
-  it("trẻ dưới 72 tháng mà chưa có người giám hộ → chặn; có rồi thì qua", () => {
+  it("trẻ dưới 72 tháng: cần người đưa trẻ và cân nặng; đủ thì qua", () => {
     const child = { ...base().patient, dateOfBirth: "2024-01-01" };
-    assert.ok(checkPrescription(base({ patient: child })).errors.some((e) => e.includes("giám hộ")));
-    assert.deepEqual(checkPrescription(base({ patient: { ...child, guardianName: "Người giám hộ giả" } })).errors, []);
+    const r = checkPrescription(base({ patient: child }));
+    assert.ok(r.errors.some((e) => e.includes("người đưa trẻ")));
+    assert.ok(r.errors.some((e) => e.includes("Cân nặng")));
+    assert.deepEqual(checkPrescription(base({ patient: { ...child, guardianName: "Người giám hộ giả" }, weightKg: 12.5 })).errors, []);
+  });
+
+  it("thiếu phần nào của cách dùng thì nêu đúng phần đó", () => {
+    const r = checkPrescription(base({ lines: [line({ route: "", timesPerDay: null, durationDays: null })] }));
+    assert.ok(r.errors.some((e) => e.includes("đường dùng") && e.includes("số lần/ngày") && e.includes("số ngày dùng")));
   });
 
   it("thuốc kiểm soát đặc biệt → chặn (fail-closed)", () => {
@@ -61,12 +72,12 @@ describe("checkPrescription", () => {
 
   it("thuốc ngừng dùng, trùng thuốc, số lượng sai, thiếu cách dùng → chặn", () => {
     const r = checkPrescription(
-      base({ lines: [line({ drugActive: false }), line({ quantity: 0, dosageInstruction: "" }), line({ drugId: "d2", quantity: 1.5 })] }),
+      base({ lines: [line({ drugActive: false }), line({ quantity: 0, timing: "" }), line({ drugId: "d2", quantity: 1.5 })] }),
     );
     assert.ok(r.errors.some((e) => e.includes("ngừng dùng")));
     assert.ok(r.errors.some((e) => e.includes("trùng")));
     assert.ok(r.errors.some((e) => e.includes("Dòng 2") && e.includes("số lượng")));
-    assert.ok(r.errors.some((e) => e.includes("cách dùng")));
+    assert.ok(r.errors.some((e) => e.includes("thời điểm dùng")));
     assert.ok(r.errors.some((e) => e.includes("Dòng 3") && e.includes("số lượng")));
   });
 
@@ -79,5 +90,17 @@ describe("checkPrescription", () => {
     const r = checkPrescription(base({ patient: { ...base().patient, idNumber: null } }));
     assert.deepEqual(r.errors, []);
     assert.equal(r.warnings.length, 1);
+  });
+});
+
+describe("usageText / printedQuantity", () => {
+  it("ghép cách dùng đủ 5 phần, thêm ghi chú nếu có", () => {
+    const u = { route: "Uống", dosePerTime: "1 viên", timesPerDay: 2, timing: "sau ăn", durationDays: 5 };
+    assert.equal(usageText(u), "Uống: mỗi lần 1 viên, ngày 2 lần, sau ăn. Dùng 5 ngày.");
+    assert.equal(usageText({ ...u, note: "Uống nhiều nước." }), "Uống: mỗi lần 1 viên, ngày 2 lần, sau ăn. Dùng 5 ngày. Uống nhiều nước.");
+  });
+  it("số lượng dưới 10 có số 0 phía trước", () => {
+    assert.equal(printedQuantity(5), "05");
+    assert.equal(printedQuantity(10), "10");
   });
 });

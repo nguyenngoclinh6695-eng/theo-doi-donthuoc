@@ -19,6 +19,8 @@ export interface DrugInput {
   brandName: string | null;
   route: string | null;
   control: DrugControl;
+  /** Thuốc nhiều hoạt chất – trên đơn ghi theo tên thương mại. */
+  isCombination: boolean;
   note: string | null;
 }
 
@@ -40,6 +42,7 @@ export function parseDrugForm(get: (name: keyof DrugInput) => FormDataEntryValue
     brandName: clean(get("brandName")),
     route: clean(get("route")),
     control: (controlRaw in drugControlLabels ? controlRaw : "thuong") as DrugControl,
+    isCombination: get("isCombination") === "on",
     note: clean(get("note")),
   };
   const errors: DrugFieldErrors = {};
@@ -54,12 +57,18 @@ export function parseDrugForm(get: (name: keyof DrugInput) => FormDataEntryValue
     if ((data[k]?.length ?? 0) > 200) errors[k] = "Tối đa 200 ký tự.";
   }
   if (!(controlRaw in drugControlLabels)) errors.control = "Nhóm kiểm soát không hợp lệ.";
+  if (data.isCombination && !data.brandName) errors.brandName = "Thuốc nhiều hoạt chất phải có tên thương mại (trên đơn ghi theo tên thương mại).";
   return { data, errors };
 }
 
-/** Tên hiển thị: "Hoạt chất Hàm lượng (Tên thương mại)". */
-export function drugDisplayName(d: Pick<DrugInput, "activeIngredient" | "strength" | "brandName">): string {
-  return `${d.activeIngredient} ${d.strength}${d.brandName ? ` (${d.brandName})` : ""}`;
+/**
+ * Tên thuốc ghi trên đơn theo Điều 6 khoản 5 TT 26/2025:
+ * - Một hoạt chất: tên chung quốc tế (INN) [+ (tên thương mại)] + hàm lượng.
+ * - Nhiều hoạt chất: tên thương mại + hàm lượng.
+ */
+export function drugDisplayName(d: Pick<DrugInput, "activeIngredient" | "strength" | "brandName"> & { isCombination?: boolean }): string {
+  if (d.isCombination) return [d.brandName ?? d.activeIngredient, d.strength].filter(Boolean).join(" ");
+  return `${d.activeIngredient}${d.brandName ? ` (${d.brandName})` : ""} ${d.strength}`.trim();
 }
 
 export function drugSearchText(d: Pick<DrugInput, "activeIngredient" | "brandName" | "strength">): string {

@@ -2,7 +2,7 @@
 
 import type { Sex } from "@/domain/patient";
 import type { DrugControl } from "@/domain/drug";
-import type { PatientSnapshot } from "@/domain/prescription";
+import { usageText, type PatientSnapshot } from "@/domain/prescription";
 import { NO_BASIS_MESSAGE, type Tone } from "@/domain/standards";
 import type { AppointmentStatus, PrescriptionStatus, VisitStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
@@ -88,8 +88,8 @@ export interface PrescriptionView {
     drugDosageForm: string;
     unit: string;
     quantity: number;
-    dosageInstruction: string;
-    durationDays: number | null;
+    /** Câu cách dùng như sẽ in trên đơn. */
+    usage: string;
     drugActive: boolean;
     drugControl: DrugControl;
   }[];
@@ -226,8 +226,7 @@ export async function getVisitWorkspace(visitId: string): Promise<VisitWorkspace
         drugDosageForm: i.drugDosageForm,
         unit: i.unit,
         quantity: i.quantity,
-        dosageInstruction: i.dosageInstruction,
-        durationDays: i.durationDays,
+        usage: usageText({ ...i, note: i.dosageInstruction }),
         drugActive: i.drug.isActive,
         drugControl: controlFromDb[i.drug.control],
       })),
