@@ -62,7 +62,10 @@ Mở PowerShell **Run as administrator** tại thư mục dự án:
 powershell -ExecutionPolicy Bypass -File scripts\register-tasks.ps1
 ```
 
-- `PhongKham-Web`: chạy website khi máy khởi động (log ở thư mục `logs\`).
+- `PhongKham-Web`: chạy website **khi tài khoản Windows đã chạy lệnh trên đăng nhập** (log ở thư mục `logs\`).
+  Không chạy dưới tài khoản hệ thống (SYSTEM) được vì Microsoft Edge – dùng để in đơn PDF – tự thoát khi chạy dưới SYSTEM.
+  Vì vậy nên cho máy chủ **tự đăng nhập Windows khi bật máy** (để sau mất điện website tự chạy lại) và **khoá màn hình**
+  khi không dùng (Windows + L – website vẫn chạy khi màn hình khoá). Đăng xuất (Sign out) thì website dừng.
 - `PhongKham-Backup`: sao lưu database lúc 22:00 vào `backups\` (giữ 30 bản).
   **Chép thư mục `backups\` sang ổ cứng rời / máy khác định kỳ** – nếu máy chủ hỏng mà bản sao lưu nằm cùng máy thì mất cả hai.
 
