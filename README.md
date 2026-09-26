@@ -57,6 +57,10 @@ Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì 
   không kiểm tra lâm sàng, không gợi ý thuốc. Thuốc kiểm soát đặc biệt bị chặn (chưa hỗ trợ mẫu đơn riêng).
 - **In đơn thuốc**: nút “In đơn (A5)” / “Khổ A4” ở đơn đã chốt → PDF sinh từ `templates/don-thuoc-tt26.html` (Phụ lục I TT 26/2025, đơn “C”)
   bằng Microsoft Edge có sẵn (thư viện `playwright-core`). Dữ liệu in lấy từ ảnh chụp lúc chốt đơn. Cần khai báo `CLINIC_NAME/ADDRESS/PHONE` trong `.env`.
+- **Bản scan đơn đã ký**: tải lên ở Tổng quan / màn hình khám (PDF, JPG, PNG ≤ 10 MB, kiểm tra theo nội dung file). Lưu ở `storage/`
+  (không lên Git, sao lưu cùng database bằng `scripts\backup-db.ps1`); chỉ xem được qua đường dẫn có kiểm tra quyền.
+- **Tiếp đón & lịch hẹn**: xem lịch theo ngày, đặt/đổi giờ/huỷ, đánh dấu đã đến/vắng; mục “Cần đặt lịch tái khám theo đơn”
+  lấy từ ngày hẹn trên đơn đã chốt (hệ thống không tự đoán giờ hẹn).
 - Kiểm thử logic nghiệp vụ: `npm test`.
 
 ## Sửa nhanh
