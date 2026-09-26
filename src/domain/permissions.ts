@@ -14,7 +14,8 @@ export const PERMISSIONS = [
   "patients.view",
   "patients.edit",
   "visits.view",
-  "visits.record",
+  "visits.record", // Mở lượt khám, ghi chỉ số
+  "visits.diagnose", // Ghi chẩn đoán và ghi chép khám – chỉ bác sĩ
   "prescriptions.view",
   "prescriptions.write", // Kê và chốt đơn – chỉ bác sĩ
   "prescriptions.uploadScan",
@@ -39,6 +40,7 @@ const ROLE_PERMISSIONS: Record<UserRole, readonly Permission[]> = {
     "patients.edit",
     "visits.view",
     "visits.record",
+    "visits.diagnose",
     "prescriptions.view",
     "prescriptions.write",
     "prescriptions.uploadScan",

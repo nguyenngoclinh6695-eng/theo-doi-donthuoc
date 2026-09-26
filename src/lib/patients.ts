@@ -101,7 +101,7 @@ export interface PatientDetail {
   createdAt: string;
   updatedAt: string;
   appointments: { id: string; scheduledAt: string; reason: string; status: DbAppointmentStatus }[];
-  visits: { id: string; visitedAt: string; doctorName: string }[];
+  visits: { id: string; visitedAt: string; doctorName: string | null; inProgress: boolean }[];
   prescriptions: { id: string; code: string; status: PrescriptionStatus; finalizedAt: string | null; hasScan: boolean; doctorName: string }[];
   reminderCalls: { id: string; calledAt: string; calledBy: string }[];
 }
@@ -143,7 +143,7 @@ export async function getPatientDetail(id: string, options: { includePrescriptio
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
     appointments: p.appointments.map((a) => ({ id: a.id, scheduledAt: a.scheduledAt.toISOString(), reason: a.reason, status: a.status })),
-    visits: p.visits.map((v) => ({ id: v.id, visitedAt: v.visitedAt.toISOString(), doctorName: v.doctor.fullName })),
+    visits: p.visits.map((v) => ({ id: v.id, visitedAt: v.visitedAt.toISOString(), doctorName: v.doctor?.fullName ?? null, inProgress: v.status === "IN_PROGRESS" })),
     prescriptions: prescriptions.map((r) => ({
       id: r.id,
       code: r.code,

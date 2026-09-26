@@ -36,6 +36,15 @@ Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì 
   (chỉnh trong `src/lib/auth/session.ts` và `src/app/actions/auth.ts`).
 - Chạy production cần HTTPS (cookie đăng nhập có cờ Secure).
 
+## Thư viện chuẩn, khám bệnh, kê đơn
+
+- **Không có ngưỡng lâm sàng nào trong code hay dữ liệu mẫu.** Ngưỡng nhập ở Thư viện chuẩn, kèm văn bản nguồn + phiên bản,
+  và chỉ có hiệu lực khi một bác sĩ **khác người soạn** duyệt. Thiếu căn cứ → “Chưa có căn cứ trong phác đồ để phân loại”.
+- Chỉ số ghi trong lượt khám lưu kèm bộ ngưỡng đã dùng lúc ghi (ngưỡng đổi sau này không làm đổi kết quả cũ).
+- Chốt đơn chỉ kiểm tra đủ thông tin hành chính (`src/domain/prescription.ts` – cần đối chiếu với Phụ lục I TT 26/2025/TT-BYT);
+  không kiểm tra lâm sàng, không gợi ý thuốc. Thuốc kiểm soát đặc biệt bị chặn (chưa hỗ trợ mẫu đơn riêng).
+- Kiểm thử logic nghiệp vụ: `npm test`.
+
 ## Sửa nhanh
 
 | Muốn đổi | Sửa file |
@@ -46,5 +55,6 @@ Thông tin kết nối nằm trong file `.env` (không commit). Máy mới thì 
 | Bảng dữ liệu | `prisma/schema.prisma`, rồi chạy `npm run db:migrate` |
 | Dữ liệu mẫu | `prisma/seed.ts`, rồi chạy `npm run db:seed` |
 | Quyền theo vai trò | `src/domain/permissions.ts` |
+| Trường bắt buộc khi chốt đơn | `src/domain/prescription.ts` |
 
 Toàn bộ dữ liệu hiện tại là **dữ liệu mẫu** (cột `isSample = true`), không phải thông tin người thật.

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon, type IconName } from "@/components/icons";
 import { sexLabels } from "@/components/patients/patient-table";
-import { secondaryButtonClass } from "@/components/ui/form-field";
+import { startVisit } from "@/app/actions/visits";
+import { primaryButtonClass, secondaryButtonClass } from "@/components/ui/form-field";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge, type Tone } from "@/components/ui/status-badge";
 import { ageOn, formatAge } from "@/domain/patient";
@@ -80,11 +81,20 @@ export default async function PatientDetailPage(props: PageProps<"/benh-nhan/[id
             </p>
           )}
         </div>
-        {can(user.role, "patients.edit") && (
-          <Link href={`/benh-nhan/${p.id}/sua`} className={secondaryButtonClass}>
-            Sửa hồ sơ
-          </Link>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {can(user.role, "visits.record") && (
+            <form action={startVisit.bind(null, p.id, null)}>
+              <button type="submit" className={primaryButtonClass}>
+                Bắt đầu lượt khám
+              </button>
+            </form>
+          )}
+          {can(user.role, "patients.edit") && (
+            <Link href={`/benh-nhan/${p.id}/sua`} className={secondaryButtonClass}>
+              Sửa hồ sơ
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* Dị ứng đặt ở đầu, có biểu tượng và chữ, để không bị bỏ sót khi mở hồ sơ. Nội dung đúng như nhân viên đã ghi. */}
@@ -144,9 +154,18 @@ export default async function PatientDetailPage(props: PageProps<"/benh-nhan/[id
             ) : (
               <ul className="divide-y divide-line">
                 {p.visits.map((v) => (
-                  <li key={v.id} className="flex flex-wrap justify-between gap-3 px-5 py-3 text-sm">
-                    <span className="font-medium tabular-nums">{formatDateTimeFull(v.visitedAt)}</span>
-                    <span className="text-ink-muted">{v.doctorName}</span>
+                  <li key={v.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+                    {can(user.role, "visits.view") ? (
+                      <Link href={`/kham-benh/${v.id}`} className="font-medium tabular-nums text-primary-ink underline-offset-4 hover:underline">
+                        {formatDateTimeFull(v.visitedAt)}
+                      </Link>
+                    ) : (
+                      <span className="font-medium tabular-nums">{formatDateTimeFull(v.visitedAt)}</span>
+                    )}
+                    <span className="flex items-center gap-2 text-ink-muted">
+                      {v.inProgress && <StatusBadge tone="neutral" icon="stethoscope" label="Đang khám" />}
+                      {v.doctorName ?? "Chưa có bác sĩ nhận"}
+                    </span>
                   </li>
                 ))}
               </ul>

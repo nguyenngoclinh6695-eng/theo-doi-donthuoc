@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { approveSet, deleteDraftSet, newVersionFrom, retireSet } from "@/app/actions/standards";
 import { BandsTable } from "@/components/standards/bands-table";
-import { StateActionButton } from "@/components/standards/state-action-button";
+import { ResultButton } from "@/components/ui/result-button";
 import { dangerButtonClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui/form-field";
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -74,7 +74,7 @@ export default async function SetDetailPage(props: PageProps<"/thu-vien-chuan/bo
             </>
           )}
           {s.status === "DRAFT" && canApprove && !isAuthor && (
-            <StateActionButton
+            <ResultButton
               action={approveSet.bind(null, s.id)}
               label="Duyệt và áp dụng"
               pendingLabel="Đang duyệt…"
@@ -83,7 +83,7 @@ export default async function SetDetailPage(props: PageProps<"/thu-vien-chuan/bo
             />
           )}
           {s.status === "ACTIVE" && canApprove && (
-            <StateActionButton
+            <ResultButton
               action={retireSet.bind(null, s.id)}
               label="Ngừng áp dụng"
               pendingLabel="Đang xử lý…"

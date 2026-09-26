@@ -53,9 +53,9 @@ async function main() {
     prisma.auditLog.deleteMany(),
     prisma.session.deleteMany(),
     prisma.measurement.deleteMany(),
-    prisma.drug.deleteMany({ where: { isSample: true } }),
     prisma.reminderCall.deleteMany(),
-    prisma.prescription.deleteMany(),
+    prisma.prescription.deleteMany(), // Xoá kèm các dòng thuốc (cascade), nên phải trước khi xoá thuốc mẫu
+    prisma.drug.deleteMany({ where: { isSample: true } }),
     prisma.visit.deleteMany(),
     prisma.appointment.deleteMany(),
     prisma.patient.deleteMany(),
@@ -63,6 +63,7 @@ async function main() {
   ]);
   // Chỉ có dữ liệu mẫu nên đặt lại bộ đếm mã bệnh nhân: hồ sơ thật đầu tiên sẽ là BN-000001.
   await prisma.$executeRaw`ALTER SEQUENCE "patient_code_seq" RESTART WITH 1`;
+  await prisma.$executeRaw`ALTER SEQUENCE "prescription_code_seq" RESTART WITH 1`;
 
   // Tài khoản mẫu dùng chung một mật khẩu lấy từ .env (SEED_USER_PASSWORD), không ghi cứng trong code.
   // Không bắt đổi mật khẩu để tiện chuyển qua lại giữa các vai trò khi thử nghiệm.
@@ -223,17 +224,42 @@ async function main() {
     { idx: 13, daysAgo: 3, scanned: true },
   ];
   let seq = 180;
+  const firstDrug = await prisma.drug.findFirstOrThrow({ where: { isSample: true, control: "NORMAL" }, orderBy: { activeIngredient: "asc" } });
   for (const plan of prescriptionPlan) {
     const finalizedAt = at(addDays(today, -plan.daysAgo), "08:05");
+    const pt = patients[plan.idx];
     await prisma.prescription.create({
       data: {
         code: `ĐT-MAU-${String(++seq).padStart(4, "0")}`,
-        patientId: patients[plan.idx].id,
+        patientId: pt.id,
         doctorId: doctors[plan.idx % 2].id,
         status: "FINALIZED",
         finalizedAt,
+        diagnosisText: "Chẩn đoán mẫu – dữ liệu thử nghiệm",
+        patientSnapshot: {
+          code: pt.code,
+          fullName: pt.fullName,
+          dateOfBirth: pt.dateOfBirth?.toISOString().slice(0, 10) ?? null,
+          sex: pt.sex === "MALE" ? "nam" : "nu",
+          address: pt.address,
+          phone: pt.phone,
+          idNumber: null,
+          insuranceNo: null,
+          guardianName: pt.guardianName,
+          ageText: "",
+        },
         signedScanPath: plan.scanned ? `mau/scan-${seq}.pdf` : null,
         scanUploadedAt: plan.scanned ? new Date(finalizedAt.getTime() + 3_600_000) : null,
+        items: {
+          create: {
+            drugId: firstDrug.id,
+            drugName: `${firstDrug.activeIngredient} ${firstDrug.strength} (${firstDrug.brandName})`,
+            drugDosageForm: firstDrug.dosageForm,
+            unit: firstDrug.unit,
+            quantity: 10,
+            dosageInstruction: "Cách dùng mẫu – dữ liệu thử nghiệm",
+          },
+        },
       },
     });
   }

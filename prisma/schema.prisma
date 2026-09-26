@@ -60,7 +60,8 @@ model User {
   standardSetsApproved StandardSet[]    @relation("StandardSetApprovedBy")
   measurementsRecorded Measurement[]    @relation("MeasurementRecordedBy")
   appointmentsCreated  Appointment[]    @relation("AppointmentCreatedBy")
-  visits               Visit[]
+  visits               Visit[]          @relation("VisitDoctor")
+  visitsStarted        Visit[]          @relation("VisitStartedBy")
   prescriptions        Prescription[]
   reminderCalls        ReminderCall[]
   auditLogs            AuditLog[]
@@ -138,18 +139,34 @@ model Appointment {
   @@index([patientId, scheduledAt])
 }
 
+enum VisitStatus {
+  IN_PROGRESS // Đang khám
+  COMPLETED // Đã kết thúc
+}
+
 /// Một lượt khám.
 model Visit {
-  id            String   @id @default(uuid()) @db.Uuid
-  patientId     String   @db.Uuid
-  doctorId      String   @db.Uuid
+  id            String      @id @default(uuid()) @db.Uuid
+  patientId     String      @db.Uuid
+  /// Bác sĩ phụ trách; có thể trống khi điều dưỡng mở lượt khám để đo chỉ số trước.
+  doctorId      String?     @db.Uuid
+  startedById   String?     @db.Uuid
   /// Lượt khám phát sinh từ lịch hẹn nào (nếu có).
-  appointmentId String?  @unique @db.Uuid
-  visitedAt     DateTime @db.Timestamptz(3)
-  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  appointmentId String?     @unique @db.Uuid
+  visitedAt     DateTime    @db.Timestamptz(3)
+  status        VisitStatus @default(COMPLETED)
+  /// Lý do đến khám (hành chính, do nhân viên ghi).
+  reason        String?
+  /// Chẩn đoán do BÁC SĨ ghi – hệ thống không tự chẩn đoán.
+  diagnosisText String?
+  /// Ghi chép khám của bác sĩ.
+  clinicalNote  String?
+  completedAt   DateTime?   @db.Timestamptz(3)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
 
   patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  doctor        User           @relation(fields: [doctorId], references: [id])
+  doctor        User?          @relation("VisitDoctor", fields: [doctorId], references: [id])
+  startedBy     User?          @relation("VisitStartedBy", fields: [startedById], references: [id])
   appointment   Appointment?   @relation(fields: [appointmentId], references: [id])
   prescriptions Prescription[]
   measurements  Measurement[]
@@ -158,26 +175,55 @@ model Visit {
   @@index([patientId, visitedAt])
 }
 
-/// Phần đầu đơn thuốc. Các dòng thuốc sẽ thêm ở bước kê đơn cùng Danh mục thuốc.
+/// Đơn thuốc. Bản nháp sửa được; đã chốt thì không sửa (muốn đổi phải huỷ và kê đơn mới).
 model Prescription {
-  id             String             @id @default(uuid()) @db.Uuid
-  /// Số đơn nội bộ.
-  code           String             @unique
-  patientId      String             @db.Uuid
-  doctorId       String             @db.Uuid
-  visitId        String?            @db.Uuid
-  status         PrescriptionStatus @default(DRAFT)
-  finalizedAt    DateTime?          @db.Timestamptz(3)
+  id              String             @id @default(uuid()) @db.Uuid
+  /// Số đơn nội bộ, cấp tự động từ sequence.
+  code            String             @unique @default(dbgenerated("('DT-' || lpad((nextval('prescription_code_seq'::regclass))::text, 6, '0'))"))
+  patientId       String             @db.Uuid
+  doctorId        String             @db.Uuid
+  visitId         String?            @db.Uuid
+  status          PrescriptionStatus @default(DRAFT)
+  finalizedAt     DateTime?          @db.Timestamptz(3)
   /// Đường dẫn file scan đơn đã có chữ ký tay; null = chưa tải lên.
-  signedScanPath String?
-  scanUploadedAt DateTime?          @db.Timestamptz(3)
-  createdAt      DateTime           @default(now()) @db.Timestamptz(3)
+  signedScanPath  String?
+  scanUploadedAt  DateTime?          @db.Timestamptz(3)
+  /// Chẩn đoán ghi trên đơn (do bác sĩ ghi).
+  diagnosisText   String?
+  /// Lời dặn của bác sĩ.
+  advice          String?
+  followUpDate    DateTime?          @db.Date
+  /// Ảnh chụp thông tin bệnh nhân lúc chốt đơn – bản in luôn khớp với lúc chốt dù hồ sơ sửa sau này.
+  patientSnapshot Json?
+  cancelledAt     DateTime?          @db.Timestamptz(3)
+  cancelReason    String?
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime           @default(now()) @updatedAt @db.Timestamptz(3)
 
-  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  doctor  User    @relation(fields: [doctorId], references: [id])
-  visit   Visit?  @relation(fields: [visitId], references: [id])
+  patient Patient            @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor  User               @relation(fields: [doctorId], references: [id])
+  visit   Visit?             @relation(fields: [visitId], references: [id])
+  items   PrescriptionItem[]
 
   @@index([status, scanUploadedAt])
+}
+
+/// Một dòng thuốc trong đơn. Lưu kèm tên/đơn vị thuốc lúc kê để đơn cũ không đổi khi danh mục sửa.
+model PrescriptionItem {
+  id                String @id @default(uuid()) @db.Uuid
+  prescriptionId    String @db.Uuid
+  drugId            String @db.Uuid
+  drugName          String
+  drugDosageForm    String
+  unit              String
+  quantity          Int
+  /// Cách dùng do bác sĩ ghi (liều, số lần, thời điểm).
+  dosageInstruction String
+  durationDays      Int?
+  sortOrder         Int    @default(0)
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  drug         Drug         @relation(fields: [drugId], references: [id])
 }
 
 /// Mỗi lần nhân viên gọi nhắc bệnh nhân trễ hẹn.
@@ -225,25 +271,26 @@ enum DrugControl {
 }
 
 model Drug {
-  id               String      @id @default(uuid()) @db.Uuid
+  id                String             @id @default(uuid()) @db.Uuid
   /// Tên hoạt chất (tên chung).
-  activeIngredient String
+  activeIngredient  String
   /// Hàm lượng / nồng độ, vd. "500 mg".
-  strength         String
+  strength          String
   /// Dạng bào chế, vd. "Viên nén".
-  dosageForm       String
+  dosageForm        String
   /// Đơn vị tính khi kê số lượng, vd. "viên".
-  unit             String
-  brandName        String?
-  route            String?
-  control          DrugControl @default(NORMAL)
-  isActive         Boolean     @default(true)
-  note             String?
+  unit              String
+  brandName         String?
+  route             String?
+  control           DrugControl        @default(NORMAL)
+  isActive          Boolean            @default(true)
+  note              String?
   /// Chuỗi tìm kiếm bỏ dấu (hoạt chất + tên thương mại).
-  searchText       String      @default("")
-  isSample         Boolean     @default(false)
-  createdAt        DateTime    @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime    @updatedAt @db.Timestamptz(3)
+  searchText        String             @default("")
+  isSample          Boolean            @default(false)
+  prescriptionItems PrescriptionItem[]
+  createdAt         DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(3)
 
   @@index([activeIngredient])
 }

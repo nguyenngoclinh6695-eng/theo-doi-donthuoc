@@ -35,6 +35,17 @@ const actionLabels: Record<string, string> = {
   "standard.set.approve": "Duyệt bộ ngưỡng",
   "standard.set.retire": "Ngừng áp dụng bộ ngưỡng",
   "standard.set.delete": "Xoá bản nháp bộ ngưỡng",
+  "visit.start": "Mở lượt khám",
+  "visit.notes.update": "Ghi chép khám",
+  "visit.complete": "Kết thúc lượt khám",
+  "measurement.create": "Ghi chỉ số",
+  "measurement.delete": "Xoá chỉ số ghi nhầm",
+  "prescription.create": "Tạo đơn thuốc (nháp)",
+  "prescription.item.add": "Thêm thuốc vào đơn",
+  "prescription.item.remove": "Bỏ thuốc khỏi đơn",
+  "prescription.finalize": "Chốt đơn thuốc",
+  "prescription.draft.delete": "Xoá đơn nháp",
+  "prescription.cancel": "Huỷ đơn đã chốt",
 };
 
 export default async function AuditLogPage() {
