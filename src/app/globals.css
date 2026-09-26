@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/*
+ * Design token – bảng màu "biển lặng".
+ * Mọi màu trong giao diện chỉ được lấy từ đây (qua class Tailwind như bg-primary, text-ink-muted...),
+ * để đổi màu toàn site chỉ cần sửa một chỗ.
+ *
+ * Vì sao có thêm nhóm "-ink": một số màu gốc (chủ đạo, đạt, chú ý) khi dùng làm màu CHỮ
+ * trên nền sáng không đạt tương phản WCAG AA (4.5:1). Màu gốc vẫn dùng cho viền, chấm, biểu tượng;
+ * còn chữ và nền nút dùng biến thể "-ink" đậm hơn một chút (đã đo ≥ 4.5:1 trên nền trang và nền nhấn phụ).
+ */
+@theme {
+  --color-page: #f4f8fa;
+  --color-surface: #ffffff;
+  --color-primary: #1b7fb0;
+  --color-primary-ink: #18729e;
+  --color-primary-strong: #0b4f71;
+  --color-accent: #e4f2f8;
+  --color-ink: #1e2a32;
+  --color-ink-muted: #5b6b75;
+  --color-line: #dbe5ea;
+
+  --color-success: #3e8e6a;
+  --color-success-ink: #347759;
+  --color-success-soft: #e6f2ec;
+  --color-attention: #c98a2b;
+  --color-attention-ink: #91631f;
+  --color-attention-soft: #faf0df;
+  --color-danger: #c0504d;
+  --color-danger-ink: #b44b48;
+  --color-danger-soft: #f8e7e6;
+
+  --font-sans: var(--font-be-vietnam), system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  /* Dành cho trang in đơn thuốc ở các bước sau. */
+  --font-print: "Times New Roman", Times, serif;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+}
+
+/* Focus rõ ràng khi dùng bàn phím, không hiện khi bấm chuột. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
