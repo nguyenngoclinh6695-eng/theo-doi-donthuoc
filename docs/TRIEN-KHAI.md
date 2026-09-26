@@ -78,7 +78,7 @@ powershell -ExecutionPolicy Bypass -File scripts\register-tasks.ps1
    tailscale serve --bg 3000
    ```
    Lệnh in ra đường link `https://<tên-máy>.<tailnet>.ts.net` → điền phần tên miền (không có `https://`) vào `APP_HOST` trong `.env`,
-   rồi khởi động lại: `Restart-ScheduledTask -TaskName PhongKham-Web`.
+   rồi khởi động lại: `powershell -ExecutionPolicy Bypass -File scriptsestart-web.ps1`.
    *Không dùng `tailscale funnel`* – lệnh đó mở website ra internet công cộng.
 4. Trên **mỗi máy tính / điện thoại của nhân viên**: cài ứng dụng Tailscale, đăng nhập (người quản lý mời vào mạng của phòng khám).
 5. Nhân viên mở đường link ở bước 3 → trang đăng nhập → dùng tài khoản được cấp.
@@ -94,12 +94,15 @@ npm run db:clear-sample -- --xac-nhan
 Xoá toàn bộ bệnh nhân/thuốc/tài khoản **mẫu**. Không đụng tới tài khoản thật, Thư viện chuẩn.
 Sau lệnh này **không chạy `npm run db:seed` trên máy chủ thật** nữa.
 
-## 6. Cập nhật phiên bản mới
+## 6. Cập nhật phiên bản mới / khởi động lại
+
+Sau khi sửa file `.env` (vd. thông tin phòng khám) cần khởi động lại website: `powershell -ExecutionPolicy Bypass -File scriptsestart-web.ps1` (Windows sẽ hỏi quyền Admin).
+
 
 ```bash
 git pull
 powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1
-Restart-ScheduledTask -TaskName PhongKham-Web
+powershell -ExecutionPolicy Bypass -File scriptsestart-web.ps1
 ```
 
 ## Lưu ý bảo mật

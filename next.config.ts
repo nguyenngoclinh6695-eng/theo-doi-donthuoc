@@ -24,7 +24,9 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           // Không gửi đường dẫn (có thể chứa mã hồ sơ) sang trang khác khi bấm liên kết ra ngoài.
-          { key: "Referrer-Policy", value: "no-referrer" },
+          // Dùng "same-origin" chứ KHÔNG dùng "no-referrer": với "no-referrer" trình duyệt gửi "Origin: null" khi POST,
+          // Next.js coi server action là giả mạo (CSRF) và từ chối – lỗi chỉ lộ ra khi chạy sau proxy (Tailscale).
+          { key: "Referrer-Policy", value: "same-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
